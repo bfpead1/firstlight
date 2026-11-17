@@ -151,13 +151,7 @@ export function createLlm({
       }
       let listed;
       try {
-        const res = await fetchFn(`${providers[name].baseUrl}/models`, {
-          headers: { Authorization: `Bearer ${providers[name].apiKey}` },
-          signal: AbortSignal.timeout(15_000),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const body = await res.json();
-        listed = new Map((body.data ?? []).map((m) => [m.id, m]));
+        listed = await listModels(providers[name], [...models]);
       } catch (err) {
         for (const m of models) {
           modelStatus.set(keyOf(name, m), { ok: null, reason: `couldn't read ${name}'s model list (${err.message})` });
@@ -177,6 +171,33 @@ export function createLlm({
       }
     }
     return status();
+  }
+
+  /**
+   * The provider's models as Map(id -> { active? }). OpenAI-style providers serve GET /models.
+   * Cloudflare's OpenAI-compatible endpoint doesn't (HTTP 405), so it uses its own model search
+   * API instead, where beta or deprecation-scheduled models count as not active.
+   */
+  async function listModels(p, wanted) {
+    const get = async (url) => {
+      const res = await fetchFn(url, { headers: { Authorization: `Bearer ${p.apiKey}` }, signal: AbortSignal.timeout(15_000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    };
+    if (p.modelsFormat === "cloudflare") {
+      const listed = new Map();
+      for (const model of wanted) {
+        const body = await get(`${p.modelsUrl}?search=${encodeURIComponent(model.replace(/^@cf\//, ""))}&per_page=50`);
+        if (body.success === false) throw new Error(body.errors?.[0]?.message ?? "search failed");
+        for (const m of body.result ?? []) {
+          const flagged = (m.properties ?? []).some((prop) => /beta|preview|deprecat/i.test(prop.property_id ?? ""));
+          listed.set(m.name, { id: m.name, active: !flagged });
+        }
+      }
+      return listed;
+    }
+    const body = await get(p.modelsUrl ?? `${p.baseUrl}/models`);
+    return new Map((body.data ?? []).map((m) => [m.id, m]));
   }
 
   /** One HTTP call to one provider. Throws ProviderError. */

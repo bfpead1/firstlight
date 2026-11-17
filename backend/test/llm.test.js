@@ -262,3 +262,38 @@ describe("privacy", () => {
     }
   });
 });
+
+describe("Cloudflare model search", () => {
+  test("models are checked through the native search API; beta models count as unavailable", async () => {
+    const server = http.createServer((req, res) => {
+      const search = new URL(req.url, "http://x").searchParams.get("search");
+      const result =
+        search === "openai/gpt-oss-120b"
+          ? [{ name: "@cf/openai/gpt-oss-120b", properties: [] }]
+          : search === "beta-model"
+            ? [{ name: "@cf/beta-model", properties: [{ property_id: "beta", value: "true" }] }]
+            : [];
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ success: true, errors: [], result }));
+    });
+    await new Promise((r) => server.listen(0, "127.0.0.1", r));
+    const base = `http://127.0.0.1:${server.address().port}`;
+    try {
+      const llm = createLlm({
+        providers: { cloudflare: { baseUrl: `${base}/ai/v1`, apiKey: "fake", modelsUrl: `${base}/ai/models/search`, modelsFormat: "cloudflare" } },
+        routes: {
+          plan: [{ provider: "cloudflare", model: "@cf/openai/gpt-oss-120b" }],
+          extract: [{ provider: "cloudflare", model: "@cf/beta-model" }],
+          triage: [{ provider: "cloudflare", model: "@cf/not-real" }],
+        },
+        log: () => {},
+      });
+      const status = await llm.checkModels();
+      assert.equal(status.tasks.plan[0].available, true);
+      assert.equal(status.tasks.extract[0].available, false);
+      assert.equal(status.tasks.triage[0].available, false);
+    } finally {
+      await new Promise((r) => server.close(r));
+    }
+  });
+});

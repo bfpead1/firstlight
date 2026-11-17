@@ -92,6 +92,11 @@ function buildProviders(e) {
         ? `https://api.cloudflare.com/client/v4/accounts/${e.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
         : null,
       apiKey: e.CLOUDFLARE_ACCOUNT_ID ? e.CLOUDFLARE_API_TOKEN : undefined,
+      // The OpenAI-compatible endpoint has no /models; the native model search does.
+      modelsUrl: e.CLOUDFLARE_ACCOUNT_ID
+        ? `https://api.cloudflare.com/client/v4/accounts/${e.CLOUDFLARE_ACCOUNT_ID}/ai/models/search`
+        : null,
+      modelsFormat: "cloudflare",
       tpm: e.LLM_CLOUDFLARE_TPM,
       rpm: e.LLM_CLOUDFLARE_RPM,
       jsonMode: "schema",
