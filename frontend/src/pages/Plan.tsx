@@ -27,7 +27,6 @@ export function Plan() {
   const today = useTodayPlan();
   const generate = useGeneratePlan();
   const data = today.data?.plan;
-  const plannedMinutes = data?.priorities.reduce((n, p) => n + p.estimated_minutes, 0) ?? 0;
 
   return (
     <div className="px-6 pb-28 pt-7 md:pb-10">
@@ -43,7 +42,7 @@ export function Plan() {
           <h1 className="font-display text-[28px] leading-tight text-ink">Today's plan</h1>
           <p className="text-[13px] text-ink-soft-55">
             {data
-              ? `${data.priorities.length} priorities · about ${Math.round(plannedMinutes / 6) / 10} hours of focused work`
+              ? `${data.order.length} tasks · ${data.free_blocks.length} blocks of free time`
               : "Built from your calendar and inbox"}
           </p>
         </div>

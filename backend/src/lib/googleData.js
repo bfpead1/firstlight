@@ -1,3 +1,5 @@
+import { htmlToText } from "../plan/text.js";
+
 // Read-only fetchers for the Google APIs, shared by the /api/google routes and the
 // daily brief. `client` is an authorized OAuth client from clientForUser().
 
@@ -94,4 +96,27 @@ export async function fetchRecentEmails(client, { max = 10 } = {}) {
       };
     }),
   );
+}
+
+/**
+ * Plain-text body of one message (prefers text/plain, else text/html stripped). Only called
+ * for emails triage marked "action needed"; the caller trims and caps it before any use.
+ */
+export async function fetchEmailBody(client, messageId) {
+  const { data: msg } = await client.request({
+    url: `${GMAIL_MESSAGES}/${encodeURIComponent(messageId)}`,
+    params: { format: "full" },
+  });
+  const plain = [];
+  const html = [];
+  (function walk(part) {
+    if (!part) return;
+    const data = part.body?.data;
+    if (data && part.mimeType === "text/plain") plain.push(Buffer.from(data, "base64url").toString("utf8"));
+    else if (data && part.mimeType === "text/html") html.push(Buffer.from(data, "base64url").toString("utf8"));
+    (part.parts ?? []).forEach(walk);
+  })(msg.payload);
+  if (plain.length) return plain.join("\n");
+  if (html.length) return htmlToText(html.join("\n"));
+  return msg.snippet ?? "";
 }

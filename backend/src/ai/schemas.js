@@ -2,84 +2,80 @@
 // functions check rules a schema can't express. A failed check triggers one retry
 // (see generateJson in llmCore.js), then an error.
 import { z } from "zod";
-import { toMinutes } from "../lib/time.js";
 import { PlanDaySchema, PlanWeekSchema, validatePlanShape } from "../workout/planSchema.js";
 
 // ─── Daily plan ────────────────────────────────────────────────────────────
 
-export const BLOCK_TYPES = ["class", "task", "workout", "study", "break"];
+const SIZE = z.enum(["quick", "medium", "long"]);
 
-export const DailyPlanSchema = z.object({
-  priorities: z.array(
+export const TriageSchema = z.object({
+  emails: z.array(
     z.object({
-      title: z.string().min(1),
-      reason: z.string().min(1),
-      estimated_minutes: z.number(),
+      id: z.string(),
+      category: z.enum(["action", "fyi", "ignore"]),
+      suggestion: z.string().max(300),
     }),
   ),
-  time_blocks: z.array(
-    z.object({
-      start: z.string(), // "HH:MM", 24-hour, user's timezone
-      end: z.string(),
-      label: z.string().min(1),
-      type: z.enum(BLOCK_TYPES),
-    }),
-  ),
-  email_actions: z.array(
-    z.object({
-      email_id: z.string(),
-      suggestion: z.string().min(1),
-    }),
-  ),
-  note: z.string(),
 });
 
-const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+/** Every email classified exactly once, and no unknown ids. */
+export function validateTriage(result, { emailIds }) {
+  const seen = new Set();
+  for (const e of result.emails) {
+    if (!emailIds.includes(e.id)) return `id "${e.id}" is not one of the provided emails.`;
+    if (seen.has(e.id)) return `id "${e.id}" appears more than once.`;
+    seen.add(e.id);
+  }
+  const missing = emailIds.filter((id) => !seen.has(id));
+  if (missing.length) return `Classify every email; missing ids: ${missing.join(", ")}.`;
+  return null;
+}
 
-/**
- * @param plan    parsed DailyPlanSchema output
- * @param events  today's timed calendar events as { start: "HH:MM", end: "HH:MM", title }
- * @param emailIds ids of the emails the model was given
- */
-export function validateDailyPlan(plan, { events, emailIds }) {
-  if (plan.priorities.length < 3 || plan.priorities.length > 5) {
-    return `Give 3 to 5 priorities (got ${plan.priorities.length}).`;
-  }
-  for (const p of plan.priorities) {
-    if (!(p.estimated_minutes >= 5 && p.estimated_minutes <= 480)) {
-      return `estimated_minutes for "${p.title}" must be between 5 and 480.`;
-    }
-  }
+const DUE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
 
-  for (const b of plan.time_blocks) {
-    if (!HHMM.test(b.start) || !HHMM.test(b.end)) return `Block "${b.label}" must use 24-hour HH:MM times.`;
-    if (toMinutes(b.end) <= toMinutes(b.start)) return `Block "${b.label}" ends before it starts.`;
-  }
+export const ExtractSchema = z.object({
+  tasks: z.array(
+    z.object({
+      source_id: z.string(),
+      title: z.string().min(1).max(160),
+      due: z.string().nullable(),
+      size: SIZE,
+      note: z.string().max(300),
+    }),
+  ),
+});
 
-  // Every timed calendar event must appear with its real times.
-  const isEventBlock = (b) => events.some((e) => e.start === b.start && e.end === b.end);
-  for (const e of events) {
-    if (!plan.time_blocks.some((b) => b.start === e.start && b.end === e.end)) {
-      return `Calendar event "${e.title}" (${e.start}–${e.end}) is missing; include every calendar event at its exact time.`;
-    }
+/** Known source ids only, at most 3 tasks per item, valid due dates, and every Canvas item covered. */
+export function validateExtract(result, { sourceIds, canvasIds }) {
+  const perSource = new Map();
+  for (const t of result.tasks) {
+    if (!sourceIds.includes(t.source_id)) return `source_id "${t.source_id}" is not one of the provided items.`;
+    if (t.due !== null && !DUE.test(t.due)) return `due "${t.due}" must be YYYY-MM-DD, YYYY-MM-DDTHH:MM or null.`;
+    perSource.set(t.source_id, (perSource.get(t.source_id) ?? 0) + 1);
   }
+  for (const [id, n] of perSource) if (n > 3) return `Give at most 3 tasks for "${id}".`;
+  const uncovered = canvasIds.filter((id) => !perSource.has(id));
+  if (uncovered.length) return `Every Canvas item needs at least one task; missing: ${uncovered.join(", ")}.`;
+  return null;
+}
 
-  // No overlaps, except between two calendar events that are themselves double-booked.
-  const sorted = [...plan.time_blocks].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
-  for (let i = 0; i < sorted.length; i++) {
-    for (let j = i + 1; j < sorted.length; j++) {
-      const a = sorted[i];
-      const b = sorted[j];
-      if (toMinutes(b.start) >= toMinutes(a.end)) break;
-      if (isEventBlock(a) && isEventBlock(b)) continue;
-      return `"${a.label}" (${a.start}–${a.end}) overlaps "${b.label}" (${b.start}–${b.end}). Blocks must not overlap or cover calendar events.`;
-    }
-  }
+export const PrioritizeSchema = z.object({
+  order: z.array(z.string()),
+  top: z.array(z.object({ task_id: z.string(), reason: z.string().max(300) })),
+  note: z.string().max(600),
+});
 
-  if (plan.email_actions.length > 5) return "Give at most 5 email actions.";
-  for (const a of plan.email_actions) {
-    if (!emailIds.includes(a.email_id)) return `email_id "${a.email_id}" is not one of the provided emails.`;
-  }
+/** `order` is a permutation of the task ids; `top` is 3-5 of them (fewer if there are fewer tasks). */
+export function validatePrioritize(result, { taskIds }) {
+  const set = new Set(result.order);
+  if (set.size !== result.order.length) return "order lists a task more than once.";
+  const unknown = result.order.filter((id) => !taskIds.includes(id));
+  if (unknown.length) return `order has unknown ids: ${unknown.join(", ")}.`;
+  const missing = taskIds.filter((id) => !set.has(id));
+  if (missing.length) return `order must include every task; missing: ${missing.join(", ")}.`;
+  const want = Math.min(3, taskIds.length);
+  if (result.top.length < want || result.top.length > 5) return `top must have ${want} to 5 tasks (got ${result.top.length}).`;
+  for (const t of result.top) if (!taskIds.includes(t.task_id)) return `top has unknown id "${t.task_id}".`;
   return null;
 }
 

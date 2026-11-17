@@ -4,7 +4,7 @@
 import { config, isAllowedEmail } from "../config.js";
 import { db } from "../db/index.js";
 import { localTime, toMinutes } from "../lib/time.js";
-import { generateDailyPlan, todayInAppZone } from "../plan/dailyPlan.js";
+import { generateDailyPlan, isCurrentPlan, todayInAppZone } from "../plan/dailyPlan.js";
 
 const CHECK_EVERY_MS = 60_000;
 // date -> Set of user ids already attempted, so a failure doesn't retry every minute.
@@ -24,7 +24,7 @@ async function tick() {
     if (done.has(userId)) continue;
     done.add(userId);
     const existing = await db.briefs.get(userId, date);
-    if (existing && Array.isArray(existing.brief?.time_blocks)) continue;
+    if (isCurrentPlan(existing?.brief)) continue;
 
     const user = await db.users.get(userId);
     if (!user || !isAllowedEmail(user.email)) continue;

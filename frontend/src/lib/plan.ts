@@ -5,16 +5,49 @@ import { ApiError, getJson, sendJson } from "./api";
 
 export type BlockType = "class" | "task" | "workout" | "study" | "break";
 
+export type TaskSize = "quick" | "medium" | "long";
+
+export type PlanTask = {
+  id: string;
+  key: string;
+  title: string;
+  source: "email" | "canvas" | "workout" | "scripture";
+  source_id: string | null;
+  due: string | null;
+  size: TaskSize;
+  /** "ai": sized by the model; "you": your correction; "plan": a known duration (workout, study). */
+  size_source: "ai" | "you" | "plan";
+  note: string;
+  missing?: boolean;
+  course?: string | null;
+  url?: string | null;
+  minutes?: number;
+};
+
+export type PlanFailure = { at: string; code: string; message: string };
+
 export type DailyPlan = {
   date: string;
   generatedAt: string;
+  /** Set when the last generation attempt failed after this plan was made. */
+  failure?: PlanFailure | null;
   plan: {
-    priorities: { title: string; reason: string; estimated_minutes: number }[];
+    version: 2;
+    free_blocks: { start: string; end: string; minutes: number; items: { task_id: string; part: number; parts: number }[] }[];
+    unscheduled: string[];
+    tasks: Record<string, PlanTask>;
+    order: string[];
+    priorities: { task_id: string; title: string; reason: string; size: TaskSize }[];
     time_blocks: { start: string; end: string; label: string; type: BlockType }[];
     email_actions: { email_id: string; suggestion: string; subject: string | null; from: string | null }[];
+    triage_counts: { action: number; fyi: number; ignore: number };
     note: string;
+    warnings: string[];
+    source: { fallback: boolean; calls: { task: string; provider: string; model: string; fallback: boolean; cached: boolean }[] };
   };
 };
+
+export const sizeLabels: Record<TaskSize, string> = { quick: "Quick", medium: "Medium", long: "Long" };
 
 const planKey = ["plan", "today"];
 
@@ -24,7 +57,8 @@ export function useTodayPlan() {
     queryKey: planKey,
     queryFn: async () => {
       try {
-        return await getJson<DailyPlan>("/api/plan/today");
+        // ensure=1: the server generates today's plan if the morning job missed it.
+        return await getJson<DailyPlan>("/api/plan/today?ensure=1");
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) return null;
         throw err;

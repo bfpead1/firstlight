@@ -135,6 +135,10 @@ export async function fetchUpcoming(conn, { start, end }) {
         dueAt: i.plannable?.due_at ?? i.plannable_date ?? null,
         points: i.plannable?.points_possible ?? null,
         url: i.html_url ? webUrl(i.html_url, conn.baseUrl) : null,
+        // For fetching the description (and caching it by last update).
+        courseId: i.course_id ?? null,
+        plannableId: i.plannable_id ?? null,
+        updatedAt: i.plannable?.updated_at ?? null,
         submitted: Boolean(sub.submitted),
         graded: Boolean(sub.graded),
         late: Boolean(sub.late),
@@ -162,6 +166,42 @@ export async function fetchMissing(conn, { days = 21 } = {}) {
       dueAt: a.due_at,
       points: a.points_possible ?? null,
       url: a.html_url ? webUrl(a.html_url, conn.baseUrl) : null,
+      type: "assignment",
+      courseId: a.course_id ?? null,
+      plannableId: a.id,
+      updatedAt: a.updated_at ?? null,
     }))
     .sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+}
+
+// Descriptions rarely change, so they're cached by item id + last update (or for a day when
+// Canvas doesn't report an update time). In memory only: a restart just refetches.
+const descriptionCache = new Map();
+const DESCRIPTION_CACHE_MAX = 300;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const DESCRIPTION_PATHS = {
+  assignment: (c, id) => [`/courses/${c}/assignments/${id}`, "description"],
+  sub_assignment: (c, id) => [`/courses/${c}/assignments/${id}`, "description"],
+  quiz: (c, id) => [`/courses/${c}/quizzes/${id}`, "description"],
+  discussion_topic: (c, id) => [`/courses/${c}/discussion_topics/${id}`, "message"],
+};
+
+/**
+ * The HTML description of an assignment, quiz or discussion (null when it has none or the
+ * type isn't supported). Read-only GET, like everything else in this client.
+ */
+export async function fetchDescription(conn, item) {
+  const path = DESCRIPTION_PATHS[item.type];
+  if (!path || !item.courseId || !item.plannableId) return null;
+  const key = `${conn.baseUrl}|${item.type}-${item.plannableId}|${item.updatedAt ?? "unknown"}`;
+  const hit = descriptionCache.get(key);
+  if (hit && (item.updatedAt || Date.now() - hit.at < DAY_MS)) return hit.value;
+
+  const [url, field] = path(encodeURIComponent(item.courseId), encodeURIComponent(item.plannableId));
+  const body = await canvasGet(conn, url);
+  const value = typeof body?.[field] === "string" ? body[field] : null;
+  descriptionCache.set(key, { at: Date.now(), value });
+  if (descriptionCache.size > DESCRIPTION_CACHE_MAX) descriptionCache.delete(descriptionCache.keys().next().value);
+  return value;
 }

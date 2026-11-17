@@ -21,7 +21,7 @@ import { thoughtForDate } from "../data/thoughts";
 import { ApiError, localDateString } from "../lib/api";
 import { GOOGLE_RECONNECT_URL, useCurrentUser } from "../lib/auth";
 import { canvasMessage, formatDue, useCanvasStatus, useCanvasUpcoming } from "../lib/canvas";
-import { aiMessage, useGeneratePlan, useTodayPlan } from "../lib/plan";
+import { aiMessage, sizeLabels, useGeneratePlan, useTodayPlan } from "../lib/plan";
 import {
   type CalendarEvent,
   formatEventTime,
@@ -156,7 +156,7 @@ export function Home() {
                 </p>
               ) : todayPlan.data ? (
                 todayPlan.data.plan.priorities.map((p, i) => (
-                  <ListRow key={p.title} first={i === 0} className="items-start py-3.5">
+                  <ListRow key={p.task_id} first={i === 0} className="items-start py-3.5">
                     <span className="w-5 shrink-0 pt-px font-mono text-[13px] font-medium text-accent">
                       {String(i + 1).padStart(2, "0")}
                     </span>
@@ -164,9 +164,7 @@ export function Home() {
                       <p className="text-[15px] font-medium text-ink">{p.title}</p>
                       <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft-55">{p.reason}</p>
                     </div>
-                    <span className="shrink-0 pt-px tabular text-[12.5px] text-ink-soft-55">
-                      {p.estimated_minutes} min
-                    </span>
+                    <span className="shrink-0 pt-px text-[12.5px] text-ink-soft-55">{sizeLabels[p.size]}</span>
                   </ListRow>
                 ))
               ) : todayPlan.isPending ? (
