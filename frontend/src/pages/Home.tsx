@@ -98,7 +98,7 @@ export function Home() {
           <figcaption className="mt-1 text-[13px] text-ink-soft-55">{thought.source}</figcaption>
         </figure>
 
-        <div className="mt-5 grid overflow-hidden rounded-card border border-card-border bg-card sm:grid-cols-2">
+        <div className="mt-5 grid grid-cols-1 overflow-hidden rounded-card border border-card-border bg-card sm:grid-cols-2">
           <div className="min-w-0 px-[18px] py-3.5">
             <p className="flex items-center gap-1.5 text-[12.5px] text-ink-soft-55">
               <span className="h-1.5 w-1.5 rounded-full bg-calendar" aria-hidden="true" />
@@ -125,8 +125,10 @@ export function Home() {
         </div>
       </header>
 
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start">
-        <div className="space-y-7">
+      {/* grid-cols-1 is minmax(0,1fr): without it the implicit column is sized to its widest
+          unbreakable line (a long email address or subject) and the page grows past the screen. */}
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start">
+        <div className="min-w-0 space-y-7">
           <section>
             <SectionLabel
               Icon={CheckListIcon}
@@ -150,7 +152,7 @@ export function Home() {
             <Card padded={false}>
               {generate.isError && (
                 <div className="flex items-center justify-between gap-3 border-b border-divider px-[18px] py-3">
-                  <p className="text-[13.5px] text-ink">{aiMessage(generate.error)}</p>
+                  <p className="min-w-0 text-[13.5px] text-ink wrap-anywhere">{aiMessage(generate.error)}</p>
                   <button type="button" onClick={() => generate.mutate()} className="btn btn-secondary btn-sm">
                     Retry
                   </button>
@@ -264,8 +266,8 @@ export function Home() {
                 ) : (
                   importantEmails.map((e, i) => (
                     <EmailLink key={e.email_id} id={e.email_id} account={user?.email} first={i === 0}>
-                      <div className="min-w-0">
-                        <p className="text-[14.5px] text-ink">{e.suggestion}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14.5px] text-ink wrap-anywhere">{e.suggestion}</p>
                         <p className="mt-0.5 truncate text-[13px] text-ink-soft-55">
                           {senderName(e.from)} · {e.subject}
                         </p>
@@ -282,7 +284,7 @@ export function Home() {
               ) : (
                 emails.data.slice(0, 5).map((e, i) => (
                   <EmailLink key={e.id} id={e.id} account={user?.email} first={i === 0}>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className={`truncate text-[14.5px] text-ink ${e.unread ? "font-medium" : ""}`}>
                         {e.unread && (
                           <span
@@ -301,7 +303,7 @@ export function Home() {
           </section>
         </div>
 
-        <div className="space-y-7">
+        <div className="min-w-0 space-y-7">
           <CourseworkSection />
 
           <section>
@@ -491,7 +493,7 @@ function CourseworkSection() {
           <p className="px-[18px] py-3.5 text-[14px] text-ink-soft-62">Loading…</p>
         ) : coursework.isError ? (
           <div className="flex items-center justify-between gap-3 px-[18px] py-3">
-            <p className="text-[14px] text-ink-soft-62">{canvasMessage(coursework.error)}</p>
+            <p className="min-w-0 text-[14px] text-ink-soft-62">{canvasMessage(coursework.error)}</p>
             {coursework.error instanceof ApiError && coursework.error.code === "canvas_auth_failed" ? (
               <Link to="/settings" className="btn btn-secondary btn-sm">
                 Settings
@@ -520,7 +522,7 @@ function CourseworkSection() {
                 className={`row-link flex items-start gap-3 px-[18px] py-3 ${i === 0 ? "" : "border-t border-divider"}`}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-[14.5px] text-ink">{item.title}</p>
+                  <p className="text-[14.5px] text-ink wrap-anywhere">{item.title}</p>
                   <p className="mt-0.5 truncate text-[13px] text-ink-soft-55">
                     {isMissing ? <strong className="font-medium text-danger">Missing · </strong> : null}
                     {item.course ? `${item.course} · ` : ""}
@@ -606,8 +608,8 @@ function PriorityList({ plan }: { plan: DailyPlan["plan"] }) {
                 />
               </button>
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-medium text-ink">{task.title}</p>
-                <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft-55">
+                <p className="text-[15px] font-medium text-ink wrap-anywhere">{task.title}</p>
+                <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft-55 wrap-anywhere">
                   {reason ??
                     [
                       "Up next",

@@ -296,7 +296,7 @@ function AiRoutingSection() {
         {problems.length > 0 && (
           <div role="alert" className="border-b border-divider bg-accent-soft px-[18px] py-3 text-[13.5px] text-ink">
             {problems.map((r) => (
-              <p key={`${r.provider}:${r.model}`}>
+              <p key={`${r.provider}:${r.model}`} className="wrap-anywhere">
                 {r.note}. Using the next model in the list instead.
               </p>
             ))}
@@ -307,8 +307,8 @@ function AiRoutingSection() {
           const isFallback = active && active !== routes[0];
           return (
             <ListRow key={task} first={i === 0 && problems.length === 0} className="justify-between">
-              <span className="text-[15px] text-ink">{taskLabels[task] ?? task}</span>
-              <span className={`text-right text-[13px] ${active ? "text-ink-soft-62" : "font-medium text-danger"}`}>
+              <span className="shrink-0 text-[15px] text-ink">{taskLabels[task] ?? task}</span>
+              <span className={`min-w-0 text-right text-[13px] wrap-anywhere ${active ? "text-ink-soft-62" : "font-medium text-danger"}`}>
                 {active ? `${active.provider} · ${active.model}` : "No usable model"}
                 {isFallback && <span className="ml-1.5 text-accent">(fallback)</span>}
                 {active?.available === null && <span className="ml-1.5">(unverified)</span>}

@@ -21,7 +21,9 @@ const tabs = [
 /** Tab bar pinned to the bottom of the screen on phones; hidden on larger screens. */
 export function BottomNav() {
   return (
-    <nav className="sticky bottom-0 z-10 border-t border-card-border bg-card md:hidden">
+    // Sticky (not fixed) so it stays in the page flow: the last item on a page scrolls clear of it.
+    // Height comes from --bottom-nav-height (index.css), which includes the safe-area inset.
+    <nav className="sticky bottom-0 z-10 h-(--bottom-nav-height) w-full border-t border-card-border bg-card md:hidden">
       <div className="mx-auto flex max-w-[480px] items-stretch justify-between px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2">
         {tabs.map(({ to, label, Icon, end }) => (
           <NavLink
@@ -35,7 +37,7 @@ export function BottomNav() {
             }
           >
             <Icon width={22} height={22} />
-            <span className="text-[10.5px] font-medium">{label}</span>
+            <span className="text-[10.5px] leading-4 font-medium">{label}</span>
           </NavLink>
         ))}
       </div>

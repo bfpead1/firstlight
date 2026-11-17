@@ -117,7 +117,7 @@ export function Plan() {
       )}
 
       {aiEnabled && (
-        <div className="fixed inset-x-0 bottom-16 z-10 mx-auto max-w-[480px] border-t border-card-border bg-page/95 px-6 py-4 backdrop-blur md:static md:mt-6 md:max-w-none md:border-0 md:bg-transparent md:p-0">
+        <div className="fixed inset-x-0 bottom-(--bottom-nav-height) z-10 mx-auto max-w-[480px] border-t border-card-border bg-page/95 px-6 py-4 backdrop-blur md:static md:mt-6 md:max-w-none md:border-0 md:bg-transparent md:p-0">
           <PrimaryButton onClick={() => generate.mutate()} disabled={generate.isPending || state.isPending} className="md:w-auto">
             {generate.isPending ? "Planning…" : failure || generate.isError ? "Try again" : plan ? "Regenerate" : "Plan my day"}
           </PrimaryButton>
@@ -221,7 +221,7 @@ function Notice({
       role={tone === "danger" ? "alert" : undefined}
       className={`flex items-start justify-between gap-3 rounded-card border p-4 text-[14px] leading-relaxed ${tones[tone]}`}
     >
-      <p>{children}</p>
+      <p className="min-w-0 wrap-anywhere">{children}</p>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );
@@ -242,19 +242,19 @@ function Timeline({ plan }: { plan: DailyPlan["plan"] }) {
     <ol className="space-y-2.5">
       {items.map((item) =>
         item.kind === "event" ? (
-          <li key={`e-${item.start}-${item.block.label}`} className="grid items-start gap-3 sm:grid-cols-[72px_1fr]">
+          <li key={`e-${item.start}-${item.block.label}`} className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[72px_minmax(0,1fr)]">
             <p className="hidden pt-2.5 tabular text-[13px] text-ink-soft-55 sm:block">{formatClock(item.block.start)}</p>
-            <div className={`rounded-button px-4 py-2.5 ${eventStyles[item.block.type]}`}>
-              <p className="text-[14.5px] font-medium">{item.block.label}</p>
+            <div className={`min-w-0 rounded-button px-4 py-2.5 ${eventStyles[item.block.type]}`}>
+              <p className="text-[14.5px] font-medium wrap-anywhere">{item.block.label}</p>
               <p className="tabular text-[12.5px] opacity-75">
                 {formatClock(item.block.start)} – {formatClock(item.block.end)}
               </p>
             </div>
           </li>
         ) : (
-          <li key={`f-${item.start}`} className="grid items-start gap-3 sm:grid-cols-[72px_1fr]">
+          <li key={`f-${item.start}`} className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[72px_minmax(0,1fr)]">
             <p className="hidden pt-3 tabular text-[13px] text-ink-soft-55 sm:block">{formatClock(item.block.start)}</p>
-            <section className="overflow-hidden rounded-card border border-card-border bg-card" aria-label={`Free time from ${formatClock(item.block.start)}`}>
+            <section className="min-w-0 overflow-hidden rounded-card border border-card-border bg-card" aria-label={`Free time from ${formatClock(item.block.start)}`}>
               <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 border-b border-divider bg-accent-soft/50 px-4 py-2">
                 <p className="whitespace-nowrap text-[13px] font-medium text-accent-hover">Free time</p>
                 <p className="whitespace-nowrap tabular text-[12.5px] text-ink-soft-55">
@@ -312,7 +312,7 @@ function TaskRow({ task, part = null, first }: { task: PlanTask; part?: string |
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className={`text-[14.5px] ${task.done ? "text-ink-soft-42 line-through" : "text-ink"}`}>
+        <p className={`text-[14.5px] wrap-anywhere ${task.done ? "text-ink-soft-42 line-through" : "text-ink"}`}>
           {href ? (
             <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">
               {task.title}
@@ -323,7 +323,7 @@ function TaskRow({ task, part = null, first }: { task: PlanTask; part?: string |
           )}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-ink-soft-55">
-          <span className={`rounded px-1.5 py-px font-medium ${style.chip}`}>
+          <span className={`min-w-0 rounded px-1.5 py-px font-medium wrap-anywhere ${style.chip}`}>
             {style.label}
             {task.course ? ` · ${task.course}` : ""}
           </span>
@@ -334,7 +334,7 @@ function TaskRow({ task, part = null, first }: { task: PlanTask; part?: string |
           ) : null}
           {part && <span>{part}</span>}
         </div>
-        {task.note && !task.done && <p className="mt-1 text-[13px] leading-snug text-ink-soft-55">{task.note}</p>}
+        {task.note && !task.done && <p className="mt-1 text-[13px] leading-snug text-ink-soft-55 wrap-anywhere">{task.note}</p>}
       </div>
 
       {task.minutes ? (
