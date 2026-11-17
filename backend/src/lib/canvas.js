@@ -1,6 +1,7 @@
 // Read-only Canvas LMS client using a personal access token.
 // Only GET requests are ever made; the app never submits or changes anything in Canvas.
-import { isIP } from "node:net";
+import { lookup } from "node:dns/promises";
+import { BlockList, isIP } from "node:net";
 import { db } from "../db/index.js";
 import { decryptSecret } from "./secrets.js";
 
@@ -32,8 +33,45 @@ export function normalizeBaseUrl(input) {
   return url.origin;
 }
 
+// Private, loopback, link-local (cloud metadata), CGNAT and multicast ranges.
+const PRIVATE = new BlockList();
+for (const [net, bits] of [
+  ["0.0.0.0", 8], ["10.0.0.0", 8], ["100.64.0.0", 10], ["127.0.0.0", 8], ["169.254.0.0", 16],
+  ["172.16.0.0", 12], ["192.168.0.0", 16], ["198.18.0.0", 15], ["224.0.0.0", 3],
+]) PRIVATE.addSubnet(net, bits, "ipv4");
+for (const [net, bits] of [["::", 127], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]]) {
+  PRIVATE.addSubnet(net, bits, "ipv6");
+}
+
+/**
+ * A hostname that passes normalizeBaseUrl can still resolve to an internal address
+ * (e.g. 127.0.0.1.nip.io), so check what it resolves to before sending the token there.
+ */
+async function assertPublicHost(hostname) {
+  let addresses;
+  try {
+    addresses = await lookup(hostname, { all: true, verbatim: true });
+  } catch {
+    throw new CanvasError("canvas_bad_url", "That address couldn't be found.");
+  }
+  if (!addresses.length || addresses.some(({ address, family }) => PRIVATE.check(address, family === 6 ? "ipv6" : "ipv4"))) {
+    throw new CanvasError("canvas_bad_url", "Use your school's public Canvas address.");
+  }
+}
+
+/** Only http(s) links from Canvas reach the page; anything else becomes null. */
+function webUrl(href, base) {
+  try {
+    const url = new URL(href, base);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 async function canvasGet(conn, path, params = {}) {
   const url = new URL(`/api/v1${path}`, conn.baseUrl);
+  await assertPublicHost(url.hostname);
   for (const [key, value] of Object.entries(params)) {
     for (const v of [value].flat()) url.searchParams.append(key, v);
   }
@@ -96,7 +134,7 @@ export async function fetchUpcoming(conn, { start, end }) {
         type: i.plannable_type,
         dueAt: i.plannable?.due_at ?? i.plannable_date ?? null,
         points: i.plannable?.points_possible ?? null,
-        url: i.html_url ? new URL(i.html_url, conn.baseUrl).href : null,
+        url: i.html_url ? webUrl(i.html_url, conn.baseUrl) : null,
         submitted: Boolean(sub.submitted),
         graded: Boolean(sub.graded),
         late: Boolean(sub.late),
@@ -123,7 +161,7 @@ export async function fetchMissing(conn, { days = 21 } = {}) {
       course: a.course?.name ?? null,
       dueAt: a.due_at,
       points: a.points_possible ?? null,
-      url: a.html_url ?? null,
+      url: a.html_url ? webUrl(a.html_url, conn.baseUrl) : null,
     }))
     .sort((a, b) => a.dueAt.localeCompare(b.dueAt));
 }

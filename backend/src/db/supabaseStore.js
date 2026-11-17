@@ -3,7 +3,7 @@
 // supabase/migrations/0001_initial_schema.sql. Returns the same camelCase shapes as
 // jsonStore.js so routes don't care which store is active.
 import { createClient } from "@supabase/supabase-js";
-import { mergeTokens } from "./tokens.js";
+import { mergeTokens, openTokens, sealTokens } from "./tokens.js";
 
 export function createSupabaseStore({ url, serviceRoleKey }) {
   const sb = createClient(url, serviceRoleKey, {
@@ -23,7 +23,7 @@ export function createSupabaseStore({ url, serviceRoleKey }) {
       email: row.email,
       name: row.name,
       picture: row.picture,
-      tokens: row.google_tokens ?? {},
+      tokens: openTokens(row.google_tokens),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -84,7 +84,7 @@ export function createSupabaseStore({ url, serviceRoleKey }) {
               email,
               name,
               picture,
-              google_tokens: mergeTokens(existing?.tokens, tokens),
+              google_tokens: sealTokens(mergeTokens(existing?.tokens, tokens)),
               updated_at: new Date().toISOString(),
             })
             .select()
@@ -99,7 +99,7 @@ export function createSupabaseStore({ url, serviceRoleKey }) {
           sb
             .from("users")
             .update({
-              google_tokens: mergeTokens(existing.tokens, tokens),
+              google_tokens: sealTokens(mergeTokens(existing.tokens, tokens)),
               updated_at: new Date().toISOString(),
             })
             .eq("id", id),

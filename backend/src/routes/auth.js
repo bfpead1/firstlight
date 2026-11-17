@@ -7,6 +7,7 @@ import {
   createOAuthClient,
 } from "../lib/google.js";
 import { db } from "../db/index.js";
+import { sessionUser } from "../lib/requireUser.js";
 
 export const authRouter = Router();
 
@@ -38,7 +39,9 @@ authRouter.get("/google/callback", async (req, res) => {
     });
     const profile = ticket.getPayload();
 
-    if (config.allowedEmails && !config.allowedEmails.includes(profile.email?.toLowerCase())) {
+    // An unverified address could belong to anyone, so it never matches the allowlist.
+    const email = profile.email_verified ? profile.email?.toLowerCase() : undefined;
+    if (config.allowedEmails && !config.allowedEmails.includes(email)) {
       console.warn(`Sign-in rejected: ${profile.email} is not in ALLOWED_EMAILS`);
       return loginRedirect(res, "not_allowed");
     }
@@ -77,7 +80,7 @@ authRouter.get("/google/callback", async (req, res) => {
 });
 
 authRouter.get("/me", async (req, res) => {
-  const user = req.session.userId ? await db.users.get(req.session.userId) : null;
+  const user = await sessionUser(req);
   if (!user) return res.status(401).json({ error: "Not signed in" });
 
   res.json({

@@ -1,7 +1,7 @@
 // Generates each user's daily plan once a day at PLAN_JOB_TIME (APP_TIMEZONE), in-process.
 // Checks every minute, so if the server was off at the scheduled time (laptop asleep),
 // it catches up as soon as it's running again. Skips users who already have today's plan.
-import { config } from "../config.js";
+import { config, isAllowedEmail } from "../config.js";
 import { db } from "../db/index.js";
 import { localTime, toMinutes } from "../lib/time.js";
 import { generateDailyPlan, todayInAppZone } from "../plan/dailyPlan.js";
@@ -27,7 +27,7 @@ async function tick() {
     if (existing && Array.isArray(existing.brief?.time_blocks)) continue;
 
     const user = await db.users.get(userId);
-    if (!user) continue;
+    if (!user || !isAllowedEmail(user.email)) continue;
     try {
       await generateDailyPlan(user, date);
       console.log(`Morning job: generated ${date} plan for ${user.email}`);

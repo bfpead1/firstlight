@@ -6,6 +6,7 @@ import express from "express";
 import { config } from "./config.js";
 import { startMorningPlanJob } from "./jobs/morningPlan.js";
 import { db } from "./db/index.js";
+import { sameOriginWrites, securityHeaders } from "./lib/security.js";
 import { authRouter } from "./routes/auth.js";
 import { canvasRouter } from "./routes/canvas.js";
 import { googleRouter } from "./routes/google.js";
@@ -17,7 +18,10 @@ import { workoutRouter } from "./routes/workout.js";
 const app = express();
 
 app.set("trust proxy", 1);
-app.use(express.json());
+app.disable("x-powered-by");
+app.use(securityHeaders);
+app.use("/api", sameOriginWrites);
+app.use(express.json({ limit: "200kb" }));
 app.use(
   cookieSession({
     name: "gm_session",

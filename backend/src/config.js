@@ -36,6 +36,10 @@ const env = z
   .refine((e) => e.NODE_ENV !== "production" || e.SUPABASE_URL, {
     message: "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in production",
   })
+  // Without an allowlist any Google account could sign in and use the AI and Canvas features.
+  .refine((e) => e.NODE_ENV !== "production" || e.ALLOWED_EMAILS, {
+    message: "ALLOWED_EMAILS is required in production (comma-separated Google emails)",
+  })
   .safeParse(process.env);
 
 if (!env.success) {
@@ -69,3 +73,8 @@ export const config = {
     ? { url: env.data.SUPABASE_URL, serviceRoleKey: env.data.SUPABASE_SERVICE_ROLE_KEY }
     : null,
 };
+
+/** True when this email may use the app (always true when no allowlist is set). */
+export function isAllowedEmail(email) {
+  return !config.allowedEmails || config.allowedEmails.includes(String(email ?? "").toLowerCase());
+}
