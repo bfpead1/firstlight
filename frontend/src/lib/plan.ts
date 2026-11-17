@@ -99,11 +99,51 @@ function usePlanEdit<TVars>(fn: (vars: TVars) => Promise<DailyPlan>) {
   });
 }
 
-/** Checks a task off, or back on. */
+/**
+ * Checks a task off, or back on. Updates the screen immediately (Home's priorities and the
+ * Plan page share this data), then saves; if saving fails, the change is undone.
+ */
 export function useSetTaskDone() {
-  return usePlanEdit(({ taskId, done }: { taskId: string; done: boolean }) =>
-    sendJson<DailyPlan>(`/api/plan/tasks/${encodeURIComponent(taskId)}/done`, "PUT", { done }),
-  );
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, done }: { taskId: string; done: boolean }) =>
+      sendJson<DailyPlan>(`/api/plan/tasks/${encodeURIComponent(taskId)}/done`, "PUT", { done }),
+    onMutate: async ({ taskId, done }) => {
+      await queryClient.cancelQueries({ queryKey: planKey });
+      const previous = queryClient.getQueryData<PlanState>(planKey);
+      if (previous?.plan?.plan.tasks[taskId]) {
+        const plan = structuredClone(previous.plan);
+        plan.plan.tasks[taskId].done = done;
+        queryClient.setQueryData<PlanState>(planKey, { ...previous, plan });
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(planKey, context.previous);
+    },
+    onSuccess: (plan) =>
+      queryClient.setQueryData<PlanState>(planKey, (prev) => ({ plan, failure: prev?.failure ?? null })),
+  });
+}
+
+/**
+ * Today's priorities that aren't done yet. When fewer than `min` remain, the next unfinished
+ * tasks in the plan's order move up (without a reason, since the AI didn't pick them as top).
+ */
+export function openPriorities(plan: DailyPlan["plan"], min = 3) {
+  const list: { task: PlanTask; reason: string | null }[] = plan.priorities
+    .filter((p) => plan.tasks[p.task_id] && !plan.tasks[p.task_id].done)
+    .map((p) => ({ task: plan.tasks[p.task_id], reason: p.reason }));
+  const shown = new Set(list.map((p) => p.task.id));
+  for (const id of plan.order ?? []) {
+    if (list.length >= min) break;
+    const task = plan.tasks[id];
+    if (task && !task.done && !shown.has(id)) {
+      list.push({ task, reason: null });
+      shown.add(id);
+    }
+  }
+  return list;
 }
 
 /** Corrects a task's size; remembered for that task on later days, and today is refitted. */

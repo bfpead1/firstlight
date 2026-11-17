@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, ListRow } from "../components/Card";
 import { EventEditor } from "../components/EventEditor";
@@ -21,7 +21,17 @@ import { thoughtForDate } from "../data/thoughts";
 import { ApiError, localDateString } from "../lib/api";
 import { GOOGLE_RECONNECT_URL, useCurrentUser } from "../lib/auth";
 import { canvasMessage, formatDue, useCanvasStatus, useCanvasUpcoming } from "../lib/canvas";
-import { aiMessage, sizeLabels, useGeneratePlan, useTodayPlan } from "../lib/plan";
+import {
+  aiMessage,
+  type DailyPlan,
+  formatTaskDue,
+  openPriorities,
+  type PlanTask,
+  sizeLabels,
+  useGeneratePlan,
+  useSetTaskDone,
+  useTodayPlan,
+} from "../lib/plan";
 import {
   type CalendarEvent,
   formatEventTime,
@@ -155,18 +165,7 @@ export function Home() {
                   Planning your day. This usually takes 5 to 30 seconds.
                 </p>
               ) : todayPlan.data ? (
-                todayPlan.data.plan.priorities.map((p, i) => (
-                  <ListRow key={p.task_id} first={i === 0} className="items-start py-3.5">
-                    <span className="w-5 shrink-0 pt-px font-mono text-[13px] font-medium text-accent">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-medium text-ink">{p.title}</p>
-                      <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft-55">{p.reason}</p>
-                    </div>
-                    <span className="shrink-0 pt-px text-[12.5px] text-ink-soft-55">{sizeLabels[p.size]}</span>
-                  </ListRow>
-                ))
+                <PriorityList plan={todayPlan.data.plan} />
               ) : todayPlan.isPending ? (
                 <p className="px-[18px] py-3.5 text-[14px] text-ink-soft-62">Loading…</p>
               ) : todayPlan.isError ? (
@@ -541,5 +540,104 @@ function CourseworkSection() {
         )}
       </Card>
     </section>
+  );
+}
+
+const sourceLabels: Record<PlanTask["source"], string> = {
+  canvas: "Canvas",
+  email: "Email",
+  workout: "Workout",
+  scripture: "Scripture",
+};
+
+/**
+ * Today's open priorities. Hovering (or focusing) a number turns it into a checkbox; checking
+ * it off marks the task done everywhere and drops it from this list, and the next tasks in
+ * the plan move up. The last one checked can be undone for a few seconds.
+ */
+function PriorityList({ plan }: { plan: DailyPlan["plan"] }) {
+  const setDone = useSetTaskDone();
+  const [lastChecked, setLastChecked] = useState<PlanTask | null>(null);
+  const items = openPriorities(plan);
+
+  useEffect(() => {
+    if (!lastChecked) return;
+    const timer = setTimeout(() => setLastChecked(null), 8000);
+    return () => clearTimeout(timer);
+  }, [lastChecked]);
+
+  function check(task: PlanTask) {
+    setDone.mutate({ taskId: task.id, done: true });
+    setLastChecked(task);
+  }
+
+  function undo() {
+    if (!lastChecked) return;
+    setDone.mutate({ taskId: lastChecked.id, done: false });
+    setLastChecked(null);
+  }
+
+  return (
+    <>
+      {items.length === 0 ? (
+        <p className="px-[18px] py-3.5 text-[14px] text-ink-soft-62">Everything on today's list is done.</p>
+      ) : (
+        items.map(({ task, reason }, i) => {
+          const due = task.due ? formatTaskDue(task.due) : null;
+          return (
+            <ListRow key={task.id} first={i === 0} className="group items-start py-3.5">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={false}
+                aria-label={`Check off ${task.title}`}
+                onClick={() => check(task)}
+                className="relative -my-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+              >
+                <span
+                  aria-hidden="true"
+                  className="font-mono text-[13px] font-medium text-accent transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-0"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-[5px] rounded-[5px] border-[1.5px] border-accent opacity-0 transition-[opacity,background-color] duration-150 group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-accent-soft [@media(hover:none)]:opacity-100"
+                />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-medium text-ink">{task.title}</p>
+                <p className="mt-0.5 text-[13.5px] leading-snug text-ink-soft-55">
+                  {reason ??
+                    [
+                      "Up next",
+                      sourceLabels[task.source] + (task.course ? ` · ${task.course}` : ""),
+                      task.missing ? "Missing" : due?.label,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                </p>
+              </div>
+              <span className="shrink-0 pt-px text-[12.5px] text-ink-soft-55">
+                {task.minutes ? `${task.minutes} min` : sizeLabels[task.size]}
+              </span>
+            </ListRow>
+          );
+        })
+      )}
+      {lastChecked && (
+        <div
+          role="status"
+          className="flex items-center justify-between gap-3 border-t border-divider bg-accent-soft/40 px-[18px] py-2"
+        >
+          <p className="min-w-0 truncate text-[13.5px] text-ink-soft-62">
+            Checked off <span className="text-ink">{lastChecked.title}</span>
+          </p>
+          <button type="button" onClick={undo} className="btn btn-quiet btn-sm shrink-0">
+            Undo
+          </button>
+        </div>
+      )}
+    </>
   );
 }
