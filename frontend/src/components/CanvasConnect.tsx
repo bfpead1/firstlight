@@ -78,7 +78,7 @@ export function CanvasConnect() {
             <li>Log in to Canvas in your browser and copy its address (for example <code>school.instructure.com</code>).</li>
             <li>
               In Canvas, open <strong>Account → Settings</strong>, scroll to <strong>Approved Integrations</strong>, and
-              click <strong>+ New Access Token</strong>. Name it "Morning" and set an expiry if you like.
+              click <strong>+ New Access Token</strong>. Name it "Firstlight" and set an expiry if you like.
             </li>
             <li>Copy the token Canvas shows (it's only shown once) and paste it below.</li>
           </ol>
@@ -106,7 +106,7 @@ export function CanvasConnect() {
           </label>
           <p className="text-[12px] leading-relaxed text-ink-soft-55">
             The token is stored encrypted on your server and only used to read assignments and due
-            dates. Morning never submits or changes anything in Canvas.
+            dates. Firstlight never submits or changes anything in Canvas.
           </p>
           {connect.isError && <p className="text-[13px] text-ink">{canvasMessage(connect.error)}</p>}
           <div className="flex gap-3">

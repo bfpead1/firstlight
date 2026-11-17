@@ -1,3 +1,4 @@
+import { BrandMark } from "../components/BrandMark";
 import { useSearchParams } from "react-router-dom";
 import { Card, ListRow } from "../components/Card";
 import { GoogleIcon, MailIcon, PlanIcon } from "../components/icons";
@@ -36,8 +37,8 @@ export function Login() {
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col justify-center px-6 py-10">
       <header className="mb-8">
         <div className="mb-8 flex items-center gap-2.5">
-          <img src="/logo.jpg" alt="" className="h-9 w-9 rounded-lg object-cover" />
-          <span className="font-display text-[18px] text-ink">Morning</span>
+          <BrandMark className="h-[23px] w-[35px] text-accent" />
+          <span className="font-display text-[20px] font-semibold tracking-[-0.03em] text-ink">Firstlight</span>
         </div>
         <h1 className="font-display text-[32px] leading-[1.1] text-ink">
           Your calendar, inbox and plan for the day, ready when you wake up.
@@ -67,7 +68,7 @@ export function Login() {
       </div>
 
       <section>
-        <h2 className="mb-2.5 text-[14px] font-medium text-ink">What Morning can see</h2>
+        <h2 className="mb-2.5 text-[14px] font-medium text-ink">What Firstlight can see</h2>
         <Card padded={false}>
           {permissions.map(({ Icon, title, access, detail }, i) => (
             <ListRow key={title} first={i === 0}>
@@ -85,7 +86,7 @@ export function Login() {
           ))}
         </Card>
         <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-ink-soft-55">
-          Morning never sends email, and only changes your calendar when you edit an
+          Firstlight never sends email, and only changes your calendar when you edit an
           event in the app. You can disconnect anytime from Settings.
         </p>
       </section>

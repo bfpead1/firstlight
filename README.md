@@ -1,4 +1,4 @@
-# Good Morning App
+# Firstlight
 
 A morning dashboard: calendar, inbox, weather, scripture study, workouts, and an AI-planned day.
 

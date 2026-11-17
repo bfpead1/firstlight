@@ -108,7 +108,7 @@ export function Settings() {
           onClick={() => {
             if (
               confirm(
-                "Disconnect Google? Morning will lose access to your Calendar and Gmail and you'll be signed out.",
+                "Disconnect Google? Firstlight will lose access to your Calendar and Gmail and you'll be signed out.",
               )
             ) {
               disconnect.mutate();

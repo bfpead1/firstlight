@@ -1,3 +1,4 @@
+import { BrandMark } from "./BrandMark";
 import { NavLink } from "react-router-dom";
 import {
   DumbbellIcon,
@@ -47,8 +48,8 @@ export function SideNav() {
   return (
     <nav className="sticky top-0 hidden h-screen w-[224px] shrink-0 flex-col border-r border-card-border bg-page px-3 py-5 md:flex">
       <NavLink to="/" className="mb-7 flex items-center gap-2.5 px-2.5">
-        <img src="/logo.jpg" alt="" className="h-8 w-8 rounded-lg object-cover" />
-        <span className="font-display text-[17px] text-ink">Morning</span>
+        <BrandMark className="h-[19px] w-[29px] text-accent" />
+        <span className="font-display text-[18px] font-semibold tracking-[-0.03em] text-ink">Firstlight</span>
       </NavLink>
       <div className="flex flex-col gap-1">
         {tabs.map(({ to, label, Icon, end }) => (
