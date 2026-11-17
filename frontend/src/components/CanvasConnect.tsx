@@ -4,7 +4,7 @@ import { ListRow } from "./Card";
 import { PrimaryButton } from "./PrimaryButton";
 
 const inputClass =
-  "w-full rounded-button border border-card-border bg-page/30 px-3 py-2 text-[14px] text-ink";
+  "w-full rounded-button border border-card-border bg-page px-3 py-2 text-[14px] text-ink";
 
 /** The Canvas row in Settings → Connected Accounts: connect form, or connected account + disconnect. */
 export function CanvasConnect() {
@@ -34,7 +34,7 @@ export function CanvasConnect() {
             }
           }}
           disabled={disconnect.isPending}
-          className="shrink-0 rounded-pill border border-ink/25 px-3.5 py-1.5 text-[13px] font-semibold text-ink"
+          className="shrink-0 btn btn-secondary btn-sm"
         >
           Disconnect
         </button>
@@ -51,7 +51,7 @@ export function CanvasConnect() {
             type="button"
             onClick={() => setOpen(true)}
             disabled={status.isPending}
-            className="rounded-pill border border-ink/25 px-3.5 py-1.5 text-[13px] font-semibold text-ink"
+            className="btn btn-secondary btn-sm"
           >
             Connect
           </button>

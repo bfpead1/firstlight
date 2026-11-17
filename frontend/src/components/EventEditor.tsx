@@ -91,7 +91,7 @@ function errorMessage(err: unknown) {
 }
 
 const inputClass =
-  "w-full rounded-button border border-card-border bg-page/30 px-3 py-2 text-[14px] text-ink";
+  "w-full rounded-button border border-card-border bg-page px-3 py-2 text-[14px] text-ink";
 
 /** Bottom sheet for adding (event = null) or editing an event. */
 export function EventEditor({ event, onClose }: { event: CalendarEvent | null; onClose: () => void }) {
@@ -127,7 +127,7 @@ export function EventEditor({ event, onClose }: { event: CalendarEvent | null; o
 
   return (
     <div
-      className="fixed inset-0 z-30 flex items-end justify-center bg-ink/40 md:items-center md:p-6"
+      className="fixed inset-0 z-30 flex items-end justify-center bg-black/55 md:items-center md:p-6"
       onClick={onClose}
       role="presentation"
     >
@@ -162,7 +162,7 @@ export function EventEditor({ event, onClose }: { event: CalendarEvent | null; o
             type="checkbox"
             checked={form.allDay}
             onChange={(e) => set("allDay", e.target.checked)}
-            className="h-4 w-4 accent-[#1e2a38]"
+            className="h-4 w-4 accent-[#2563c9]"
           />
           All day
         </label>

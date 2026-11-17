@@ -12,7 +12,7 @@ export function Card({
   return (
     <div
       className={`rounded-card border border-card-border bg-card ${
-        padded ? "p-[18px]" : "py-1.5"
+        padded ? "p-[18px]" : "overflow-hidden"
       } ${className}`}
     >
       {children}

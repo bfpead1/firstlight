@@ -1,34 +1,238 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens. "Sunrise" palette (warm cream ground, white cards, burnt-orange accent for
+ * actions) plus one colour per app area. Type Geist + Geist Mono, soft radius.
+ * Token names are shared with every page, so change values here rather than in components.
+ */
 @theme {
-  --font-display: "Fraunces", serif;
-  --font-body: "Public Sans", sans-serif;
+  --font-display: "Geist", system-ui, sans-serif;
+  --font-body: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
-  --color-page: #c4e5f7;
-  --color-card: #fff8d6;
-  --color-card-border: #efe0a8;
-  --color-divider: #f5ecd4;
-  --color-accent: #9fd3f0;
-  --color-ink: #1e2a38;
-  --color-ink-soft-30: rgba(30, 42, 56, 0.3);
-  --color-ink-soft-42: rgba(30, 42, 56, 0.42);
-  --color-ink-soft-55: rgba(30, 42, 56, 0.55);
-  --color-ink-soft-62: rgba(30, 42, 56, 0.62);
-  --color-cta-on-ink: #fbf8f1;
+  /* Sunrise base: warm cream ground, white cards, burnt-orange brand accent. */
+  --color-page: #faf6ef;
+  --color-card: #ffffff;
+  --color-card-border: #ece4d7;
+  --color-divider: #f3ede3;
+  --color-accent: #c4501b;
+  --color-accent-hover: #a8431a;
+  --color-accent-soft: #fbe7da;
+  --color-ink: #1a1714;
+  --color-ink-soft-30: rgba(26, 23, 20, 0.3);
+  --color-ink-soft-42: rgba(26, 23, 20, 0.45);
+  --color-ink-soft-55: #6b645b;
+  --color-ink-soft-62: #5b554d;
+  --color-cta-on-ink: #ffffff;
 
-  --radius-card: 20px;
-  --radius-button: 12px;
+  /* Category colours: each area of the app keeps its own hue (icons, plan blocks, progress). */
+  --color-calendar: #2563c9;
+  --color-calendar-soft: #e4ecfa;
+  --color-scripture: #2f7a45;
+  --color-scripture-soft: #e2f0e6;
+  --color-workout: #c0386e;
+  --color-workout-soft: #f9e3ec;
+  --color-coursework: #a86b12;
+  --color-coursework-soft: #f7ecd6;
+
+  --color-danger: #a3321f;
+  --color-sunrise-border: #f3dcc8;
+
+  --radius-card: 12px;
+  --radius-button: 8px;
   --radius-pill: 99px;
+}
+
+:root {
+  color-scheme: light;
+  --row-hover: #fdfaf5;
+  --sunrise-glow: #fdd9bf;
+  --sunrise-top: #fde9d9;
+  --sunrise-bottom: #fbf1e6;
+}
+
+/*
+ * Dark mode: warm near-black ground, slightly lifted cards, and brighter accent and
+ * category colours so they keep their contrast. Follows the device unless the user picks
+ * Light or Dark in Settings (data-theme on <html>, set by src/lib/theme.ts).
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --row-hover: #26211d;
+    --sunrise-glow: #4a2817;
+    --sunrise-top: #2e1f17;
+    --sunrise-bottom: #1f1a16;
+
+    --color-page: #151210;
+    --color-card: #1e1a17;
+    --color-card-border: #2f2925;
+    --color-divider: #2a2420;
+    --color-accent: #ec7a43;
+    --color-accent-hover: #f48d5a;
+    --color-accent-soft: #3b2216;
+    --color-ink: #f2ece5;
+    --color-ink-soft-30: rgba(242, 236, 229, 0.3);
+    --color-ink-soft-42: rgba(242, 236, 229, 0.45);
+    --color-ink-soft-55: #a69d93;
+    --color-ink-soft-62: #b8afa4;
+    --color-cta-on-ink: #1a1208;
+
+    --color-calendar: #7aa7f2;
+    --color-calendar-soft: #1d2a40;
+    --color-scripture: #6cc28a;
+    --color-scripture-soft: #1b3023;
+    --color-workout: #ee7aa6;
+    --color-workout-soft: #3b1e2a;
+    --color-coursework: #dcab55;
+    --color-coursework-soft: #352914;
+
+    --color-danger: #f08a74;
+    --color-sunrise-border: #3a2a20;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --row-hover: #26211d;
+  --sunrise-glow: #4a2817;
+  --sunrise-top: #2e1f17;
+  --sunrise-bottom: #1f1a16;
+
+  --color-page: #151210;
+  --color-card: #1e1a17;
+  --color-card-border: #2f2925;
+  --color-divider: #2a2420;
+  --color-accent: #ec7a43;
+  --color-accent-hover: #f48d5a;
+  --color-accent-soft: #3b2216;
+  --color-ink: #f2ece5;
+  --color-ink-soft-30: rgba(242, 236, 229, 0.3);
+  --color-ink-soft-42: rgba(242, 236, 229, 0.45);
+  --color-ink-soft-55: #a69d93;
+  --color-ink-soft-62: #b8afa4;
+  --color-cta-on-ink: #1a1208;
+
+  --color-calendar: #7aa7f2;
+  --color-calendar-soft: #1d2a40;
+  --color-scripture: #6cc28a;
+  --color-scripture-soft: #1b3023;
+  --color-workout: #ee7aa6;
+  --color-workout-soft: #3b1e2a;
+  --color-coursework: #dcab55;
+  --color-coursework-soft: #352914;
+
+  --color-danger: #f08a74;
+  --color-sunrise-border: #3a2a20;
 }
 
 body {
   background-color: var(--color-page);
   color: var(--color-ink);
   font-family: var(--font-body);
+  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
 }
 
 #root {
   min-height: 100vh;
   position: relative;
+}
+
+/* Display type: Geist 500 with tight tracking, sentence case. */
+.font-display {
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+/* Times, counts and amounts line up in columns. */
+.font-mono,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@layer components {
+  /* One button family: primary (green), secondary (outlined), quiet (text). */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: var(--radius-button);
+    font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      transform 120ms ease;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.985);
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  .btn-primary {
+    background: var(--color-accent);
+    color: var(--color-cta-on-ink);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+  .btn-secondary {
+    background: var(--color-card);
+    color: var(--color-ink);
+    border: 1px solid var(--color-card-border);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--color-ink) 28%, transparent);
+  }
+  .btn-quiet {
+    color: var(--color-ink-soft-62);
+  }
+  .btn-quiet:hover:not(:disabled) {
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--color-ink) 6%, transparent);
+  }
+  .btn-sm {
+    min-height: 36px;
+    padding: 0 0.75rem;
+    font-size: 13.5px;
+  }
+
+  /* A whole row that links somewhere. */
+  .row-link {
+    transition: background-color 150ms ease;
+  }
+  .row-link:hover {
+    background: var(--row-hover);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* The warm wash behind the greeting on Home. */
+.sunrise {
+  background:
+    radial-gradient(120% 140% at 0% 0%, var(--sunrise-glow) 0%, transparent 60%),
+    linear-gradient(180deg, var(--sunrise-top) 0%, var(--sunrise-bottom) 100%);
 }

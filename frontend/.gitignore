@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Design-skill scratch (screenshots, browser profiles)
+.taste-skill/

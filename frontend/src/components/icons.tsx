@@ -142,3 +142,27 @@ export function GoogleIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function ArrowUpRightIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M8 16 16 8M9.5 8H16v6.5" />
+    </svg>
+  );
+}
+
+export function PlusIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+export function CheckListIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m4 7 1.5 1.5L8 6M4 13l1.5 1.5L8 12M4 19l1.5 1.5L8 18M11 7.5h9M11 13.5h9M11 19.5h9" />
+    </svg>
+  );
+}

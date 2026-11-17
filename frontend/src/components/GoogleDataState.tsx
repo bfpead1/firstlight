@@ -31,7 +31,7 @@ export function GoogleDataState({
       {fixable && (
         <a
           href={GOOGLE_RECONNECT_URL}
-          className="shrink-0 rounded-pill border border-ink/25 px-3.5 py-1.5 text-[13px] font-semibold text-ink"
+          className="shrink-0 btn btn-secondary btn-sm"
         >
           Reconnect
         </a>

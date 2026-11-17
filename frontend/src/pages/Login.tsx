@@ -34,20 +34,16 @@ export function Login() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col justify-center px-6 py-10">
-      <header className="mb-8 text-center">
-        <img
-          src="/logo.jpg"
-          alt=""
-          className="mx-auto mb-4 h-28 w-28 rounded-[24px] object-cover shadow-sm"
-        />
-        <p className="text-[13px] font-semibold uppercase tracking-wide text-ink-soft-55">
-          Morning
-        </p>
-        <h1 className="mt-2 font-display text-[30px] font-medium leading-tight text-ink">
-          Good morning.
+      <header className="mb-8">
+        <div className="mb-8 flex items-center gap-2.5">
+          <img src="/logo.jpg" alt="" className="h-9 w-9 rounded-lg object-cover" />
+          <span className="font-display text-[18px] text-ink">Morning</span>
+        </div>
+        <h1 className="font-display text-[32px] leading-[1.1] text-ink">
+          Your calendar, inbox and plan for the day, ready when you wake up.
         </h1>
-        <p className="mt-2 text-[15px] text-ink-soft-62">
-          Your schedule, inbox and plan for the day, ready when you wake up.
+        <p className="mt-3 text-[15px] text-ink-soft-62">
+          Sign in with Google to connect your calendar and Gmail.
         </p>
       </header>
 
@@ -60,25 +56,18 @@ export function Login() {
         </p>
       )}
 
-      <Card className="mb-4">
+      <div className="mb-8">
         <a
           href={GOOGLE_LOGIN_URL}
-          className="flex w-full items-center justify-center gap-3 rounded-button bg-ink px-4 py-3.5 text-[15px] font-semibold text-cta-on-ink transition-opacity active:opacity-80"
+          className="btn btn-secondary w-full gap-3 text-[15px]"
         >
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
-            <GoogleIcon width={16} height={16} />
-          </span>
+          <GoogleIcon width={18} height={18} />
           Continue with Google
         </a>
-        <p className="mt-3 text-center text-[13px] text-ink-soft-55">
-          Signs you in and connects your Google account.
-        </p>
-      </Card>
+      </div>
 
       <section>
-        <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-ink-soft-55">
-          What Morning can see
-        </p>
+        <h2 className="mb-2.5 text-[14px] font-medium text-ink">What Morning can see</h2>
         <Card padded={false}>
           {permissions.map(({ Icon, title, access, detail }, i) => (
             <ListRow key={title} first={i === 0}>

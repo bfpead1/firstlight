@@ -6,11 +6,11 @@ import { aiMessage, type BlockType, formatClock, useGeneratePlan, useTodayPlan }
 import { useSettings } from "../lib/settings";
 
 const blockStyles: Record<BlockType, string> = {
-  class: "bg-card border border-ink/30 text-ink",
-  task: "bg-ink text-cta-on-ink",
-  workout: "bg-accent text-ink",
-  study: "bg-accent text-ink",
-  break: "bg-card/60 border border-dashed border-card-border text-ink-soft-62",
+  class: "bg-calendar-soft text-calendar",
+  task: "bg-accent-soft text-accent-hover",
+  workout: "bg-workout-soft text-workout",
+  study: "bg-scripture-soft text-scripture",
+  break: "bg-page border border-dashed border-card-border text-ink-soft-62",
 };
 
 const typeLabels: Record<BlockType, string> = {
@@ -30,17 +30,17 @@ export function Plan() {
   const plannedMinutes = data?.priorities.reduce((n, p) => n + p.estimated_minutes, 0) ?? 0;
 
   return (
-    <div className="px-6 pb-28 pt-7">
+    <div className="px-6 pb-28 pt-7 md:pb-10">
       <header className="mb-5 flex items-center gap-3">
         <Link
           to="/"
           aria-label="Back to Home"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-card-border bg-card text-ink"
+          className="btn btn-secondary h-9 min-h-0 w-9 shrink-0 p-0"
         >
           <ArrowLeftIcon width={18} height={18} />
         </Link>
         <div>
-          <h1 className="font-display text-[22px] font-medium text-ink">Today's plan</h1>
+          <h1 className="font-display text-[28px] leading-tight text-ink">Today's plan</h1>
           <p className="text-[13px] text-ink-soft-55">
             {data
               ? `${data.priorities.length} priorities · about ${Math.round(plannedMinutes / 6) / 10} hours of focused work`
@@ -77,18 +77,15 @@ export function Plan() {
           )}
 
           <section className="mb-4">
-            <ol className="relative space-y-4 border-l border-divider pl-5">
+            <ol className="space-y-2">
               {data.time_blocks.map((block) => (
-                <li key={`${block.start}-${block.label}`} className="relative">
-                  <span className="absolute -left-[26px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-page bg-accent" />
-                  <p className="mb-1.5 flex justify-between text-[12.5px] font-medium text-ink-soft-55">
-                    <span>
-                      {formatClock(block.start)} – {formatClock(block.end)}
-                    </span>
-                    <span>{typeLabels[block.type]}</span>
-                  </p>
-                  <div className={`rounded-2xl px-4 py-3.5 text-[15px] font-medium ${blockStyles[block.type]}`}>
-                    {block.label}
+                <li key={`${block.start}-${block.label}`} className="grid grid-cols-[72px_1fr] items-start gap-3">
+                  <p className="pt-3 tabular text-[13px] text-ink-soft-55">{formatClock(block.start)}</p>
+                  <div className={`rounded-button px-4 py-3 ${blockStyles[block.type]}`}>
+                    <p className="text-[15px] font-medium">{block.label}</p>
+                    <p className="mt-0.5 text-[12.5px] opacity-70">
+                      {typeLabels[block.type]} · until {formatClock(block.end)}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -104,8 +101,8 @@ export function Plan() {
       )}
 
       {aiEnabled && (
-        <div className="fixed inset-x-0 bottom-16 z-10 mx-auto max-w-[480px] md:bottom-0 md:left-[232px] md:max-w-[720px] md:border-x md:rounded-t-[16px] border-t border-card-border bg-page/95 px-6 py-4 backdrop-blur">
-          <PrimaryButton onClick={() => generate.mutate()} disabled={generate.isPending}>
+        <div className="fixed inset-x-0 bottom-16 z-10 mx-auto max-w-[480px] border-t border-card-border bg-page/95 px-6 py-4 backdrop-blur md:static md:mt-6 md:max-w-none md:border-0 md:bg-transparent md:p-0">
+          <PrimaryButton onClick={() => generate.mutate()} disabled={generate.isPending} className="md:w-auto">
             {generate.isPending
               ? "Planning…"
               : generate.isError

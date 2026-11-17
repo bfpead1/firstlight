@@ -34,11 +34,11 @@ export function Study() {
 
   return (
     <div className="px-6 pb-8 pt-7">
-      <h1 className="font-display text-[22px] font-medium text-ink">Scripture Study</h1>
+      <h1 className="font-display text-[28px] leading-tight text-ink">Scripture study</h1>
       <p className="mb-5 text-[13px] text-ink-soft-55">Book of Mormon reading path</p>
 
       <section className="mb-5">
-        <SectionLabel>Today's Reading</SectionLabel>
+        <SectionLabel>Today's reading</SectionLabel>
         <Card padded={false}>
           {session ? (
             <>
@@ -57,7 +57,7 @@ export function Study() {
                       <span
                         aria-hidden="true"
                         className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${
-                          ch.read ? "bg-ink text-cta-on-ink" : "border border-ink/30"
+                          ch.read ? "bg-scripture text-cta-on-ink" : "border border-ink/30"
                         }`}
                       >
                         {ch.read && "✓"}
@@ -76,7 +76,7 @@ export function Study() {
                             completed: e.target.checked,
                           })
                         }
-                        className="h-5 w-5 accent-[#1e2a38]"
+                        className="h-5 w-5 accent-[#2f7a45]"
                       />
                       {ch.book.name} {ch.chapter}
                       <span className="text-[13px] text-ink-soft-55">{ch.verses} verses</span>
@@ -96,7 +96,7 @@ export function Study() {
                         type="button"
                         onClick={() => setQuiz({ book: ch.book, chapter: ch.chapter })}
                         className={`rounded-pill px-3 py-1 text-[13px] font-semibold ${
-                          ch.read ? "border border-ink/25 text-ink" : "bg-ink text-cta-on-ink"
+                          ch.read ? "border border-ink/25 text-ink" : "bg-ink text-page"
                         }`}
                       >
                         {ch.read ? "Retake" : "Quiz"}
@@ -152,7 +152,7 @@ export function Study() {
             aria-valuemin={0}
             aria-valuemax={100}
           >
-            <div className="h-full rounded-pill bg-ink" style={{ width: `${stats.percent}%` }} />
+            <div className="h-full rounded-pill bg-scripture" style={{ width: `${stats.percent}%` }} />
           </div>
           {stats.estimatedFinish && (
             <p className="mt-3 text-[13px] text-ink-soft-62">
@@ -170,7 +170,7 @@ export function Study() {
       <PaceSection pace={pace} learningMode={learningMode} />
 
       <section className="mb-5">
-        <SectionLabel>Reading Path</SectionLabel>
+        <SectionLabel>Reading path</SectionLabel>
         <ReadingPath onQuiz={learningMode ? setQuiz : null} />
       </section>
 
@@ -198,7 +198,7 @@ function PaceSection({ pace, learningMode }: { pace: Pace; learningMode: boolean
 
   return (
     <section className="mb-5">
-      <SectionLabel>Reading Pace</SectionLabel>
+      <SectionLabel>Reading pace</SectionLabel>
       <Card>
         <label className="mb-4 block">
           <span className="mb-1.5 flex justify-between text-[14px] text-ink">
@@ -210,7 +210,7 @@ function PaceSection({ pace, learningMode }: { pace: Pace; learningMode: boolean
             max={7}
             value={draft.daysPerWeek}
             onChange={(e) => setDraft({ ...draft, daysPerWeek: Number(e.target.value) })}
-            className="w-full accent-[#1e2a38]"
+            className="w-full accent-[#2f7a45]"
           />
         </label>
         <label className="block">
@@ -228,7 +228,7 @@ function PaceSection({ pace, learningMode }: { pace: Pace; learningMode: boolean
             step={5}
             value={draft.minutesPerSession}
             onChange={(e) => setDraft({ ...draft, minutesPerSession: Number(e.target.value) })}
-            className="w-full accent-[#1e2a38]"
+            className="w-full accent-[#2f7a45]"
           />
         </label>
         <label className="mt-4 flex items-center justify-between gap-4 border-t border-divider pt-4">
@@ -243,7 +243,7 @@ function PaceSection({ pace, learningMode }: { pace: Pace; learningMode: boolean
             role="switch"
             checked={learningMode}
             onChange={(e) => update.mutate({ scriptureLearningMode: e.target.checked })}
-            className="h-5 w-5 shrink-0 accent-[#1e2a38]"
+            className="h-5 w-5 shrink-0 accent-[#2f7a45]"
           />
         </label>
       </Card>
@@ -300,10 +300,10 @@ function ReadingPath({ onQuiz }: { onQuiz: ((target: QuizTarget) => void) | null
                       }
                       className={`flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-semibold transition-colors ${
                         done
-                          ? "bg-ink text-cta-on-ink"
+                          ? "bg-scripture text-cta-on-ink"
                           : isCurrent
-                            ? "border-2 border-ink bg-accent text-ink"
-                            : "border border-card-border bg-page/40 text-ink"
+                            ? "border-2 border-scripture bg-scripture-soft text-scripture"
+                            : "border border-card-border bg-page text-ink"
                       }`}
                     >
                       {chapter}
@@ -359,7 +359,7 @@ function ImportSection() {
         onChange={(e) => setRaw(e.target.value)}
         rows={4}
         placeholder='{"1-ne":{"1":true,"2":true}}'
-        className="mt-3 w-full rounded-button border border-card-border bg-page/30 p-3 font-mono text-[12px] text-ink"
+        className="mt-3 w-full rounded-button border border-card-border bg-page p-3 font-mono text-[12px] text-ink"
       />
       {error && <p className="mt-2 text-[13px] text-ink">{error}</p>}
       {importProgress.data && (

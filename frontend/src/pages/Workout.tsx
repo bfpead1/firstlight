@@ -46,7 +46,7 @@ export function Workout() {
 
   return (
     <div className="px-6 pb-8 pt-7">
-      <h1 className="font-display text-[22px] font-medium text-ink">Workout</h1>
+      <h1 className="font-display text-[28px] leading-tight text-ink">Workout</h1>
       <p className="mb-5 text-[13px] text-ink-soft-55">
         {active.data.source === "default"
           ? "Your 2-week training plan"
@@ -172,7 +172,7 @@ function TodayWorkout({ weekLabel, day }: { weekLabel: string; day: PlanDay }) {
           </div>
           <div className="h-1.5 overflow-hidden rounded-pill bg-divider">
             <div
-              className="h-full rounded-pill bg-ink transition-[width]"
+              className="h-full rounded-pill bg-workout transition-[width]"
               style={{ width: `${Math.round((count / total) * 100)}%` }}
             />
           </div>
@@ -192,7 +192,7 @@ function RecentWorkouts() {
 
   return (
     <section className="mb-5">
-      <SectionLabel>Recent Workouts</SectionLabel>
+      <SectionLabel>Recent workouts</SectionLabel>
       <Card padded={false}>
         {recent.map((log, i) => {
           const pct = log.totalItems ? Math.round((log.completed.length / log.totalItems) * 100) : 0;
@@ -234,7 +234,7 @@ function DayCard({
     <Card padded={false}>
       <div className="px-[18px] pb-2 pt-4">
         {compact && (
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-ink-soft-55">
+          <p className="text-[12px] font-medium text-ink-soft-55">
             {WEEKDAY_NAMES[day.weekday]}
           </p>
         )}
@@ -248,7 +248,7 @@ function DayCard({
         <SectionBlock key={section.title} section={section} checks={checks} />
       ))}
       {day.note && (
-        <p className="border-t border-divider px-[18px] py-3 text-[13px] italic leading-relaxed text-ink-soft-62">
+        <p className="border-t border-divider px-[18px] py-3 text-[13px] leading-relaxed text-ink-soft-62">
           {day.note}
         </p>
       )}
@@ -266,7 +266,7 @@ function CheckButton({ checked, label, onToggle }: { checked: boolean; label: st
       aria-label={label}
       onClick={onToggle}
       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] transition-colors ${
-        checked ? "bg-ink text-cta-on-ink" : "border-[1.5px] border-ink/35"
+        checked ? "bg-workout text-cta-on-ink" : "border-[1.5px] border-ink/35"
       }`}
     >
       {checked && "✓"}
@@ -280,7 +280,7 @@ function SectionBlock({ section, checks }: { section: PlanSection; checks?: Chec
 
   return (
     <div className="border-t border-divider px-[18px] py-3">
-      <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-ink-soft-55">
+      <p className="mb-2 text-[12px] font-medium text-ink-soft-55">
         {section.title}
       </p>
 
@@ -306,12 +306,12 @@ function SectionBlock({ section, checks }: { section: PlanSection; checks?: Chec
                 role="checkbox"
                 aria-checked={done}
                 onClick={() => toggle(item)}
-                className={`rounded-button px-3 py-2 text-center transition-colors ${done ? "bg-ink" : "bg-page/40"}`}
+                className={`rounded-button px-3 py-2 text-center transition-colors ${done ? "bg-workout" : "bg-page"}`}
               >
                 {content}
               </button>
             ) : (
-              <div key={item.name} className="rounded-button bg-page/40 px-3 py-2 text-center">
+              <div key={item.name} className="rounded-button bg-page px-3 py-2 text-center">
                 {content}
               </div>
             );
@@ -353,7 +353,7 @@ function SectionBlock({ section, checks }: { section: PlanSection; checks?: Chec
                   <p className={`text-[14.5px] font-medium ${done ? "text-ink-soft-55 line-through" : "text-ink"}`}>
                     {item.name}
                     {item.swap && (
-                      <span className="ml-2 rounded bg-accent px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-ink no-underline">
+                      <span className="ml-2 rounded bg-workout-soft px-1.5 py-0.5 align-middle text-[11px] font-medium text-workout no-underline">
                         Swap
                       </span>
                     )}
@@ -388,7 +388,7 @@ function RotationSection({ plan, cycleStart }: { plan: WorkoutPlan; cycleStart: 
 
   return (
     <section className="mb-5">
-      <SectionLabel>Full Rotation</SectionLabel>
+      <SectionLabel>Full rotation</SectionLabel>
       <div className="mb-3 flex flex-wrap gap-2">
         {plan.weeks.map((w, i) => (
           <button
@@ -396,7 +396,7 @@ function RotationSection({ plan, cycleStart }: { plan: WorkoutPlan; cycleStart: 
             type="button"
             onClick={() => setShown(i)}
             className={`rounded-pill px-3.5 py-1.5 text-[13px] font-semibold ${
-              i === shown ? "bg-ink text-cta-on-ink" : "border border-ink/25 text-ink"
+              i === shown ? "bg-ink text-page" : "border border-ink/25 text-ink"
             }`}
           >
             {w.label}
@@ -520,7 +520,7 @@ function BodyMetricsSection() {
 
   return (
     <section className="mb-5">
-      <SectionLabel>Body Metrics</SectionLabel>
+      <SectionLabel>Body metrics</SectionLabel>
       <Card padded={false}>
         <div className="grid grid-cols-3 divide-x divide-divider">
           {METRIC_FIELDS.map(({ key, label, unit }) => {
@@ -625,7 +625,7 @@ function BodyMetricsSection() {
 }
 
 const inputClass =
-  "w-full rounded-button border border-card-border bg-page/30 px-3 py-2 text-[14px] text-ink";
+  "w-full rounded-button border border-card-border bg-page px-3 py-2 text-[14px] text-ink";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -656,7 +656,7 @@ function AiWorkoutSection({ aiEnabled, plan, currentWeekIndex }: { aiEnabled: bo
 
   return (
     <section className="mb-5">
-      <SectionLabel>AI Coach</SectionLabel>
+      <SectionLabel>AI coach</SectionLabel>
       <Card>
         {!aiEnabled ? (
           <p className="text-[14px] leading-relaxed text-ink-soft-62">
@@ -667,7 +667,7 @@ function AiWorkoutSection({ aiEnabled, plan, currentWeekIndex }: { aiEnabled: bo
           <SuggestionReview suggestion={pending.data} />
         ) : (
           <>
-            <div className="mb-4 grid grid-cols-2 gap-1 rounded-pill bg-page/40 p-1" role="tablist">
+            <div className="mb-4 grid grid-cols-2 gap-1 rounded-button bg-page p-1" role="tablist">
               {(
                 [
                   ["edit_day", "Edit a day"],
@@ -680,8 +680,10 @@ function AiWorkoutSection({ aiEnabled, plan, currentWeekIndex }: { aiEnabled: bo
                   role="tab"
                   aria-selected={mode === value}
                   onClick={() => setMode(value)}
-                  className={`rounded-pill py-2 text-[13.5px] font-semibold ${
-                    mode === value ? "bg-ink text-cta-on-ink" : "text-ink"
+                  className={`min-h-10 rounded-[6px] text-[13.5px] font-medium transition-colors ${
+                    mode === value
+                      ? "bg-card text-ink shadow-[0_1px_2px_rgba(0,0,0,0.12)] ring-1 ring-card-border"
+                      : "text-ink-soft-62 hover:text-ink"
                   }`}
                 >
                   {label}
@@ -841,20 +843,20 @@ function SuggestionReview({ suggestion }: { suggestion: Suggestion }) {
 
   return (
     <div>
-      <p className="mb-1 text-[12px] font-semibold uppercase tracking-wide text-ink-soft-55">
+      <p className="mb-1 text-[12px] font-medium text-ink-soft-55">
         {isNewPlan
           ? `New plan: ${suggestion.plan.name}`
           : target && `Edit · ${suggestion.plan.weeks[target.weekIndex]?.label} · ${WEEKDAY_NAMES[target.weekday]}`}
       </p>
       {suggestion.request && (
-        <p className="mb-2 text-[13px] italic text-ink-soft-55">You asked: {suggestion.request}</p>
+        <p className="mb-2 text-[13px] text-ink-soft-55">You asked: {suggestion.request}</p>
       )}
       <p className="mb-3 text-[14.5px] leading-relaxed text-ink">{suggestion.summary}</p>
 
       {suggestion.changes.length > 0 && (
         <ul className="mb-4 space-y-2">
           {suggestion.changes.map((c, i) => (
-            <li key={i} className="rounded-button bg-page/40 p-3">
+            <li key={i} className="rounded-button bg-page p-3">
               <p className="text-[14px] text-ink">{c.change}</p>
               <p className="text-[12.5px] text-ink-soft-62">{c.why}</p>
             </li>
@@ -867,7 +869,7 @@ function SuggestionReview({ suggestion }: { suggestion: Suggestion }) {
         {isNewPlan &&
           suggestion.plan.weeks[0]?.days.map((day) => (
             <details key={day.weekday} className="group">
-              <summary className="flex cursor-pointer items-center justify-between rounded-button bg-page/40 px-3 py-2.5">
+              <summary className="flex cursor-pointer items-center justify-between rounded-button bg-page px-3 py-2.5">
                 <span className="text-[14px] text-ink">
                   <span className="inline-block w-24 text-ink-soft-55">{WEEKDAY_NAMES[day.weekday]}</span>
                   {day.title}

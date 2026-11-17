@@ -82,7 +82,7 @@ export function QuizModal({ book, chapter, onClose }: { book: Book; chapter: num
   const title = `${book.name} ${chapter}`;
 
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-ink/40 md:items-center md:p-6" onClick={onClose} role="presentation">
+    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/55 md:items-center md:p-6" onClick={onClose} role="presentation">
       <div
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -136,9 +136,9 @@ export function QuizModal({ book, chapter, onClose }: { book: Book; chapter: num
                   {LETTERS.map((letter) => {
                     const answered = state.picked !== null;
                     const style = !answered
-                      ? "border-card-border bg-page/30"
+                      ? "border-card-border bg-page"
                       : letter === q.correct
-                        ? "border-ink bg-accent font-semibold"
+                        ? "border-accent bg-accent-soft font-medium"
                         : letter === state.picked
                           ? "border-ink/40 bg-divider line-through"
                           : "border-card-border opacity-60";
@@ -157,7 +157,7 @@ export function QuizModal({ book, chapter, onClose }: { book: Book; chapter: num
                 </div>
                 {state.picked && (
                   <>
-                    <p className="mb-4 rounded-button bg-page/40 p-3 text-[13.5px] leading-relaxed text-ink">
+                    <p className="mb-4 rounded-button bg-page p-3 text-[13.5px] leading-relaxed text-ink">
                       {state.picked === q.correct ? "✓ Correct!" : "✗ Not quite."} Reference:{" "}
                       <Reference reference={q.reference} />
                     </p>
@@ -185,7 +185,7 @@ export function QuizModal({ book, chapter, onClose }: { book: Book; chapter: num
                 {state.missed.length > 0 && (
                   <ul className="mb-4 space-y-2">
                     {state.missed.map((q) => (
-                      <li key={q.question} className="rounded-button bg-page/40 p-3 text-[13.5px] leading-relaxed text-ink">
+                      <li key={q.question} className="rounded-button bg-page p-3 text-[13.5px] leading-relaxed text-ink">
                         {q.question}
                         <br />
                         <span className="text-ink-soft-62">Answer: {q.options[q.correct]} · </span>

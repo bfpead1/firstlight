@@ -10,6 +10,7 @@ import {
   useLogout,
 } from "../lib/auth";
 import { useSettings, useUpdateSettings } from "../lib/settings";
+import { setTheme, type ThemeChoice, useTheme } from "../lib/theme";
 import { currentPosition, type PlaceResult, searchPlaces } from "../lib/weather";
 
 export function Settings() {
@@ -33,7 +34,7 @@ export function Settings() {
 
   return (
     <div className="px-6 pb-8 pt-7">
-      <h1 className="mb-5 font-display text-[22px] font-medium text-ink">
+      <h1 className="mb-5 font-display text-[28px] leading-tight text-ink">
         Settings
       </h1>
 
@@ -49,7 +50,7 @@ export function Settings() {
                 className="h-11 w-11 shrink-0 rounded-full"
               />
             ) : (
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent font-display text-[17px] font-semibold text-ink">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[16px] font-medium text-accent">
                 {user.name.charAt(0).toUpperCase()}
               </span>
             )}
@@ -64,7 +65,7 @@ export function Settings() {
       </section>
 
       <section className="mb-5">
-        <SectionLabel>Connected Accounts</SectionLabel>
+        <SectionLabel>Connected accounts</SectionLabel>
         <Card padded={false}>
           {googleServices.map((s, i) => (
             <ListRow key={s.id} first={i === 0} className="justify-between">
@@ -90,6 +91,7 @@ export function Settings() {
         </Card>
       </section>
 
+      <AppearanceSection />
       <LocationSection />
       <StatusSection />
 
@@ -151,7 +153,7 @@ function LocationSection() {
 
   return (
     <section className="mb-5">
-      <SectionLabel>Weather Location</SectionLabel>
+      <SectionLabel>Weather location</SectionLabel>
       <Card>
         <p className="mb-3 text-[14px] text-ink">
           {settings.data?.location?.label ?? "Not set"}
@@ -162,12 +164,12 @@ function LocationSection() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search city, e.g. Provo"
-            className="min-w-0 flex-1 rounded-button border border-card-border bg-page/30 px-3 py-2 text-[14px] text-ink"
+            className="min-w-0 flex-1 rounded-button border border-card-border bg-page px-3 py-2 text-[14px] text-ink"
           />
           <button
             type="submit"
             disabled={query.trim().length < 2}
-            className="shrink-0 rounded-button bg-ink px-4 text-[14px] font-semibold text-cta-on-ink"
+            className="btn btn-primary shrink-0"
           >
             Search
           </button>
@@ -210,7 +212,7 @@ function StatusSection() {
   if (!features) return null;
   return (
     <section className="mb-5">
-      <SectionLabel>App Status</SectionLabel>
+      <SectionLabel>App status</SectionLabel>
       <Card padded={false}>
         <ListRow first className="justify-between">
           <span className="text-[15px] text-ink">AI features (Groq)</span>
@@ -224,6 +226,43 @@ function StatusSection() {
             {features.database === "supabase" ? "Supabase" : "Local file (dev)"}
           </span>
         </ListRow>
+      </Card>
+    </section>
+  );
+}
+
+const themeOptions: { value: ThemeChoice; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
+
+/** Light / dark switch. Saved on this device only. */
+function AppearanceSection() {
+  const theme = useTheme();
+  return (
+    <section className="mb-5">
+      <SectionLabel>Appearance</SectionLabel>
+      <Card>
+        <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 rounded-button bg-page p-1">
+          {themeOptions.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={theme === value}
+              onClick={() => setTheme(value)}
+              className={`min-h-10 rounded-[6px] text-[14px] font-medium transition-colors ${
+                theme === value
+                  ? "bg-card text-ink shadow-[0_1px_2px_rgba(0,0,0,0.12)] ring-1 ring-card-border"
+                  : "text-ink-soft-62 hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2.5 text-[13px] text-ink-soft-55">System follows your device's light or dark setting.</p>
       </Card>
     </section>
   );
