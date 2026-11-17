@@ -102,6 +102,9 @@ export async function generateDailyPlan(user, date = todayInAppZone()) {
     },
   );
 
+  // Kept inside the plan: later edits (checking a task, changing a size) re-save the row,
+  // and the page compares failures against when the plan was actually generated.
+  plan.generated_at = new Date().toISOString();
   const row = await db.briefs.save(user.id, date, plan);
-  return { date, plan: row.brief, generatedAt: row.createdAt };
+  return { date, plan: row.brief, generatedAt: plan.generated_at };
 }

@@ -22,6 +22,7 @@ export type PlanTask = {
   course?: string | null;
   url?: string | null;
   minutes?: number;
+  done?: boolean;
 };
 
 export type PlanFailure = { at: string; code: string; message: string };
@@ -42,6 +43,7 @@ export type DailyPlan = {
     email_actions: { email_id: string; suggestion: string; subject: string | null; from: string | null }[];
     triage_counts: { action: number; fyi: number; ignore: number };
     note: string;
+    generated_at?: string;
     warnings: string[];
     source: { fallback: boolean; calls: { task: string; provider: string; model: string; fallback: boolean; cached: boolean }[] };
   };
@@ -51,30 +53,96 @@ export const sizeLabels: Record<TaskSize, string> = { quick: "Quick", medium: "M
 
 const planKey = ["plan", "today"];
 
-/** Today's saved plan, or null if none has been generated yet. */
-export function useTodayPlan() {
-  return useQuery({
-    queryKey: planKey,
-    queryFn: async () => {
-      try {
-        // ensure=1: the server generates today's plan if the morning job missed it.
-        return await getJson<DailyPlan>("/api/plan/today?ensure=1");
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 404) return null;
-        throw err;
-      }
-    },
-    retry: false,
-  });
+/** Today's plan (null until one exists) and the last failed generation, if it's newer. */
+export type PlanState = { plan: DailyPlan | null; failure: PlanFailure | null };
+
+async function fetchPlanState(): Promise<PlanState> {
+  try {
+    // ensure=1: the server generates today's plan if the morning job missed it.
+    const plan = await getJson<DailyPlan>("/api/plan/today?ensure=1");
+    return { plan, failure: plan.failure ?? null };
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      return { plan: null, failure: (err.body.failure as PlanFailure | null) ?? null };
+    }
+    throw err;
+  }
 }
 
-/** Generates (or regenerates) today's plan. Takes 5–30 seconds. */
+/** Plan plus failure, for the Plan page. */
+export function usePlanState() {
+  return useQuery({ queryKey: planKey, queryFn: fetchPlanState, retry: false });
+}
+
+/** Today's saved plan, or null if none has been generated yet. */
+export function useTodayPlan() {
+  return useQuery({ queryKey: planKey, queryFn: fetchPlanState, retry: false, select: (s) => s.plan });
+}
+
+/** Generates (or regenerates) today's plan. Usually 10–30 seconds; up to about 90 on a heavy day. */
 export function useGeneratePlan() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => sendJson<DailyPlan>("/api/plan/generate", "POST"),
-    onSuccess: (plan) => queryClient.setQueryData(planKey, plan),
+    onSuccess: (plan) => queryClient.setQueryData<PlanState>(planKey, { plan, failure: null }),
+    // The server recorded the failure; refetch so the page shows it next to the old plan.
+    onError: () => queryClient.invalidateQueries({ queryKey: planKey }),
   });
+}
+
+function usePlanEdit<TVars>(fn: (vars: TVars) => Promise<DailyPlan>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: (plan) =>
+      queryClient.setQueryData<PlanState>(planKey, (prev) => ({ plan, failure: prev?.failure ?? null })),
+  });
+}
+
+/** Checks a task off, or back on. */
+export function useSetTaskDone() {
+  return usePlanEdit(({ taskId, done }: { taskId: string; done: boolean }) =>
+    sendJson<DailyPlan>(`/api/plan/tasks/${encodeURIComponent(taskId)}/done`, "PUT", { done }),
+  );
+}
+
+/** Corrects a task's size; remembered for that task on later days, and today is refitted. */
+export function useSetTaskSize() {
+  return usePlanEdit(({ taskId, size }: { taskId: string; size: TaskSize }) =>
+    sendJson<DailyPlan>(`/api/plan/tasks/${encodeURIComponent(taskId)}/size`, "PUT", { size }),
+  );
+}
+
+/** "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" (local) -> "Due today, 11:59 PM", "Due Wed", "Overdue: Mon". */
+export function formatTaskDue(due: string, now = new Date()) {
+  const [datePart, timePart] = due.split("T");
+  const [y, m, d] = datePart.split("-").map(Number);
+  const when = new Date(y, m - 1, d);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((when.getTime() - today.getTime()) / 86_400_000);
+  const time = timePart ? formatClock(timePart) : null;
+  const dayLabel =
+    days === 0 ? "today" : days === 1 ? "tomorrow" : days > 1 && days < 7
+      ? when.toLocaleDateString(undefined, { weekday: "short" })
+      : when.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const overdue = days < 0 || (days === 0 && timePart && formatMinutes(timePart) < now.getHours() * 60 + now.getMinutes());
+  return {
+    label: overdue ? `Overdue · ${dayLabel}` : `Due ${dayLabel}${time ? `, ${time}` : ""}`,
+    urgent: overdue || days <= 1,
+    overdue: Boolean(overdue),
+  };
+}
+
+function formatMinutes(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** 125 -> "2 h 5 min" */
+export function formatDuration(minutes: number) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h ? `${h} h${m ? ` ${m} min` : ""}` : `${m} min`;
 }
 
 /** "13:30" -> "1:30 PM" */

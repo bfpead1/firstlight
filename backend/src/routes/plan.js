@@ -74,11 +74,12 @@ planRouter.get("/today", async (req, res) => {
     }
   }
 
+  const generatedAt = row.brief.generated_at ?? row.createdAt;
   res.json({
     date: date.data,
     plan: row.brief,
-    generatedAt: row.createdAt,
-    failure: failure && new Date(failure.at) > new Date(row.createdAt) ? failure : null,
+    generatedAt,
+    failure: failure && new Date(failure.at) > new Date(generatedAt) ? failure : null,
   });
 });
 
@@ -124,5 +125,21 @@ planRouter.put("/tasks/:taskId/size", async (req, res) => {
   plan.priorities = plan.priorities.map((p) => ({ ...p, size: plan.tasks[p.task_id].size }));
 
   const saved = await db.briefs.save(req.user.id, date, plan);
-  res.json({ date, plan: saved.brief, generatedAt: saved.createdAt, failure: null });
+  res.json({ date, plan: saved.brief, generatedAt: plan.generated_at ?? saved.createdAt });
+});
+
+const DoneSchema = z.object({ done: z.boolean() });
+
+/** Checks a task off (or back on) in today's plan. */
+planRouter.put("/tasks/:taskId/done", async (req, res) => {
+  const body = DoneSchema.safeParse(req.body);
+  if (!body.success) return res.status(400).json({ error: "invalid_done" });
+  const date = todayInAppZone();
+  const row = await db.briefs.get(req.user.id, date);
+  const plan = row?.brief;
+  const task = isCurrentPlan(plan) ? plan.tasks[req.params.taskId] : null;
+  if (!task) return res.status(404).json({ error: "task_not_found" });
+  task.done = body.data.done;
+  const saved = await db.briefs.save(req.user.id, date, plan);
+  res.json({ date, plan: saved.brief, generatedAt: plan.generated_at ?? saved.createdAt });
 });

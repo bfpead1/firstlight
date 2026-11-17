@@ -3,18 +3,27 @@ export class ApiError extends Error {
   code: string | undefined;
   /** Seconds to wait, when the server reports a rate limit. */
   retryAfter: number | null;
-  constructor(status: number, code: string | undefined, message?: string, retryAfter: number | null = null) {
+  /** The parsed error body, for endpoints that send extra details with an error. */
+  body: Record<string, unknown>;
+  constructor(
+    status: number,
+    code: string | undefined,
+    message?: string,
+    retryAfter: number | null = null,
+    body: Record<string, unknown> = {},
+  ) {
     super(message ?? code ?? `Request failed (${status})`);
     this.status = status;
     this.code = code;
     this.retryAfter = retryAfter;
+    this.body = body;
   }
 }
 
 async function handle<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new ApiError(res.status, body.error, body.message, body.retryAfter ?? null);
+    throw new ApiError(res.status, body.error, body.message, body.retryAfter ?? null, body);
   }
   return res.status === 204 ? (undefined as T) : res.json();
 }
