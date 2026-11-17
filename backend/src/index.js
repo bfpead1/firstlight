@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import cookieSession from "cookie-session";
 import express from "express";
 import { config } from "./config.js";
+import { checkModels } from "./ai/llm.js";
 import { startMorningPlanJob } from "./jobs/morningPlan.js";
 import { db } from "./db/index.js";
 import { sameOriginWrites, securityHeaders } from "./lib/security.js";
@@ -60,6 +61,9 @@ app.use((err, _req, res, _next) => {
 
 app.listen(config.port, () => {
   console.log(`API listening on http://localhost:${config.port}`);
-  console.log(`Data store: ${db.kind} · AI (Groq ${config.groq.model}): ${config.aiEnabled ? "on" : "off (no GROQ_API_KEY)"}`);
-  startMorningPlanJob();
+  console.log(`Data store: ${db.kind} · AI: ${config.aiEnabled ? "on" : "off (no usable LLM_PLAN_MODELS route)"}`);
+  // Check routed models against the providers' live lists before the morning job uses them.
+  checkModels()
+    .catch((err) => console.error("[ai] model check failed:", err.message))
+    .finally(startMorningPlanJob);
 });

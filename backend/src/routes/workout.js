@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { db } from "../db/index.js";
-import { generateJson, sendAiError } from "../ai/groq.js";
+import { generateJson, sendAiError } from "../ai/llm.js";
 import {
   buildEditDayPrompt,
   buildNewPlanPrompt,
@@ -166,7 +166,8 @@ workoutRouter.post("/generate", async (req, res) => {
 
       // History for this workout only keeps the prompt small.
       const history = summarizeLogs(logs.filter((l) => l.dayTitle === day.title), plan).slice(0, 8);
-      const result = await generateJson({
+      const { data: result } = await generateJson({
+        task: "workout",
         name: "edited_day",
         system: EDIT_DAY_SYSTEM,
         user: buildEditDayPrompt({ day, weekLabel: week.label, profile, history, metrics: recentMetrics, notes }),
@@ -191,7 +192,8 @@ workoutRouter.post("/generate", async (req, res) => {
       return res.status(201).json(suggestion);
     }
 
-    const result = await generateJson({
+    const { data: result } = await generateJson({
+      task: "workout",
       name: "new_plan",
       system: NEW_PLAN_SYSTEM,
       user: buildNewPlanPrompt({
@@ -202,7 +204,8 @@ workoutRouter.post("/generate", async (req, res) => {
       }),
       schema: NewPlanResultSchema,
       validate: (r) => validateNewPlan(r, { daysPerWeek: profile.daysPerWeek }),
-      maxTokens: 6000,
+      // Kept under the 8K tokens-per-minute cap together with the ~2K-token prompt.
+      maxTokens: 5000,
     });
     const suggestion = await db.suggestions.create(req.user.id, {
       kind: "new_plan",

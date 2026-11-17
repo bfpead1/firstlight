@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { aiStatus } from "../ai/llm.js";
 import { config } from "../config.js";
 import { db } from "../db/index.js";
 import { requireUser } from "../lib/requireUser.js";
@@ -93,4 +94,10 @@ settingsRouter.patch("/", async (req, res) => {
     ...(await getSettings(req.user.id)),
     features: { ai: config.aiEnabled, database: db.kind },
   });
+});
+
+/** AI routing health: which model each task uses, models that failed the startup check, and
+ * today's call, fallback and rate-limit counters. No prompt or response content. */
+settingsRouter.get("/ai", (_req, res) => {
+  res.json(aiStatus());
 });

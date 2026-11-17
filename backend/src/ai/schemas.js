@@ -1,6 +1,6 @@
 // Response schemas for every AI feature. Zod checks the structure; the validate*()
 // functions check rules a schema can't express. A failed check triggers one retry
-// (see generateJson in groq.js), then an error.
+// (see generateJson in llmCore.js), then an error.
 import { z } from "zod";
 import { toMinutes } from "../lib/time.js";
 import { PlanDaySchema, PlanWeekSchema, validatePlanShape } from "../workout/planSchema.js";

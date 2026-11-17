@@ -32,3 +32,26 @@ export function useUpdateSettings() {
     onSuccess: (settings) => queryClient.setQueryData(["settings"], settings),
   });
 }
+
+export type AiRoute = {
+  provider: string;
+  model: string;
+  configured: boolean;
+  /** true: in the provider's live model list. false: missing, preview, or provider not set up. null: unverified. */
+  available: boolean | null;
+  note: string | null;
+};
+
+export type AiStatus = {
+  tasks: Record<string, AiRoute[]>;
+  today: { calls: number; cached: number; fallbacks: number; rateLimited: number; failures: number; tokens: Record<string, number> };
+};
+
+/** Which model each AI task uses, models that failed the startup check, and today's counters. */
+export function useAiStatus(enabled: boolean) {
+  return useQuery({
+    queryKey: ["settings", "ai"],
+    queryFn: () => getJson<AiStatus>("/api/settings/ai"),
+    enabled,
+  });
+}

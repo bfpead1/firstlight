@@ -1,5 +1,5 @@
 // Generates and saves the daily plan. Used by POST /api/plan/generate and the morning job.
-import { generateJson } from "../ai/groq.js";
+import { generateJson } from "../ai/llm.js";
 import { buildDailyPlanPrompt, DAILY_PLAN_SYSTEM } from "../ai/prompts.js";
 import { DailyPlanSchema, validateDailyPlan } from "../ai/schemas.js";
 import { config } from "../config.js";
@@ -92,7 +92,8 @@ export async function generateDailyPlan(user, date = todayInAppZone()) {
   const { day } = workoutForDate(workoutPlan, settings, date);
   const weekday = new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
 
-  const plan = await generateJson({
+  const { data: plan, meta } = await generateJson({
+    task: "plan",
     name: "daily_plan",
     system: DAILY_PLAN_SYSTEM,
     user: buildDailyPlanPrompt({
@@ -108,7 +109,8 @@ export async function generateDailyPlan(user, date = todayInAppZone()) {
     }),
     schema: DailyPlanSchema,
     validate: (p) => validateDailyPlan(p, { events: timed, emailIds: (emails ?? []).map((e) => e.id) }),
-    maxTokens: 4000,
+    // Conservative so prompt + reserved output stays under an 8K tokens-per-minute cap.
+    maxTokens: 3500,
   });
 
   // Sort blocks, and attach sender/subject to email actions for display (no bodies stored).
@@ -121,6 +123,8 @@ export async function generateDailyPlan(user, date = todayInAppZone()) {
       subject: byId.get(a.email_id)?.subject ?? null,
       from: byId.get(a.email_id)?.from ?? null,
     })),
+    // Which provider produced this plan, so the UI can say when it came from a fallback.
+    source: { provider: meta.provider, model: meta.model, fallback: meta.fallback },
   };
   const row = await db.briefs.save(user.id, date, saved);
   return { date, plan: row.brief, generatedAt: row.createdAt };

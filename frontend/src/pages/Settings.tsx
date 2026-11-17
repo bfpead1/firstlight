@@ -9,7 +9,7 @@ import {
   useDisconnectGoogle,
   useLogout,
 } from "../lib/auth";
-import { useSettings, useUpdateSettings } from "../lib/settings";
+import { type AiRoute, useAiStatus, useSettings, useUpdateSettings } from "../lib/settings";
 import { setTheme, type ThemeChoice, useTheme } from "../lib/theme";
 import { currentPosition, type PlaceResult, searchPlaces } from "../lib/weather";
 
@@ -94,6 +94,7 @@ export function Settings() {
       <AppearanceSection />
       <LocationSection />
       <StatusSection />
+      <AiRoutingSection />
 
       <div className="space-y-3">
         <SecondaryButton
@@ -263,6 +264,62 @@ function AppearanceSection() {
           ))}
         </div>
         <p className="mt-2.5 text-[13px] text-ink-soft-55">System follows your device's light or dark setting.</p>
+      </Card>
+    </section>
+  );
+}
+
+const taskLabels: Record<string, string> = {
+  triage: "Email triage",
+  extract: "Deadline extraction",
+  plan: "Daily plan",
+  workout: "Workout coach",
+};
+
+/** The model each AI task is using right now, plus any model that failed the startup check. */
+function AiRoutingSection() {
+  const settings = useSettings();
+  const enabled = settings.data?.features.ai ?? false;
+  const status = useAiStatus(enabled);
+  if (!enabled || !status.data) return null;
+
+  const tasks = Object.entries(status.data.tasks).filter(([, routes]) => routes.length);
+  const problems = tasks.flatMap(([, routes]) =>
+    routes.filter((r) => r.configured && r.available === false),
+  );
+  const { today } = status.data;
+
+  return (
+    <section className="mb-5">
+      <SectionLabel>AI models</SectionLabel>
+      <Card padded={false}>
+        {problems.length > 0 && (
+          <div role="alert" className="border-b border-divider bg-accent-soft px-[18px] py-3 text-[13.5px] text-ink">
+            {problems.map((r) => (
+              <p key={`${r.provider}:${r.model}`}>
+                {r.note}. Using the next model in the list instead.
+              </p>
+            ))}
+          </div>
+        )}
+        {tasks.map(([task, routes], i) => {
+          const active: AiRoute | undefined = routes.find((r) => r.available !== false);
+          const isFallback = active && active !== routes[0];
+          return (
+            <ListRow key={task} first={i === 0 && problems.length === 0} className="justify-between">
+              <span className="text-[15px] text-ink">{taskLabels[task] ?? task}</span>
+              <span className={`text-right text-[13px] ${active ? "text-ink-soft-62" : "font-medium text-danger"}`}>
+                {active ? `${active.provider} · ${active.model}` : "No usable model"}
+                {isFallback && <span className="ml-1.5 text-accent">(fallback)</span>}
+                {active?.available === null && <span className="ml-1.5">(unverified)</span>}
+              </span>
+            </ListRow>
+          );
+        })}
+        <p className="border-t border-divider px-[18px] py-2.5 text-[12.5px] text-ink-soft-55">
+          Today: {today.calls} calls · {today.cached} cached · {today.fallbacks} fallbacks · {today.rateLimited} rate limits ·{" "}
+          {today.failures} failures
+        </p>
       </Card>
     </section>
   );

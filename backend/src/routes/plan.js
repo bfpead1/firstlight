@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { sendAiError } from "../ai/groq.js";
+import { sendAiError } from "../ai/llm.js";
 import { db } from "../db/index.js";
 import { isReauthError } from "../lib/google.js";
 import { requireUser } from "../lib/requireUser.js";
