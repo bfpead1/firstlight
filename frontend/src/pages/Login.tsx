@@ -1,14 +1,18 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
-import { useSearchParams } from "react-router-dom";
 import { Card, ListRow } from "../components/Card";
 import { GoogleIcon, MailIcon, PlanIcon } from "../components/icons";
 import { GOOGLE_LOGIN_URL } from "../lib/auth";
+import { enterGuest } from "../lib/guest";
+
+const ACCESS_EMAIL = "blake.pead@gmail.com";
 
 const errorMessages: Record<string, string> = {
   access_denied: "Sign-in was cancelled. Try again whenever you're ready.",
   invalid_state: "That sign-in link expired. Please try again.",
   google_error: "Google couldn't complete the sign-in. Please try again.",
-  not_allowed: "This Google account doesn't have access to this app.",
+  not_allowed: "This Google account hasn't been approved yet. See below to request access, or look around as a guest.",
 };
 
 const permissions = [
@@ -28,6 +32,8 @@ const permissions = [
 
 export function Login() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const errorCode = params.get("error");
   const error = errorCode
     ? (errorMessages[errorCode] ?? errorMessages.google_error)
@@ -65,6 +71,35 @@ export function Login() {
           <GoogleIcon width={18} height={18} />
           Continue with Google
         </a>
+        <button
+          type="button"
+          onClick={() => {
+            enterGuest();
+            queryClient.clear();
+            navigate("/", { replace: true });
+          }}
+          className="btn btn-quiet mt-2 w-full text-[15px]"
+        >
+          Look around as a guest
+        </button>
+        <p className="mt-1 px-1 text-center text-[12.5px] text-ink-soft-55">
+          Guest mode uses sample data. Nothing is connected or saved.
+        </p>
+      </div>
+
+      <div className="mb-8 rounded-button border border-accent/30 bg-accent-soft px-4 py-3 text-[14px] leading-relaxed text-ink">
+        <p className="font-semibold">Want an account?</p>
+        <p className="mt-1 text-ink-soft-62">
+          Firstlight is still in testing, so each Gmail account has to be approved before it can
+          sign in. Email{" "}
+          <a
+            href={`mailto:${ACCESS_EMAIL}?subject=${encodeURIComponent("Firstlight account request")}`}
+            className="font-semibold text-ink underline underline-offset-2"
+          >
+            {ACCESS_EMAIL}
+          </a>{" "}
+          with the Gmail address you'd like to use.
+        </p>
       </div>
 
       <section>

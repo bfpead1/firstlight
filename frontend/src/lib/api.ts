@@ -1,3 +1,5 @@
+import { apiFetch } from "./guest";
+
 export class ApiError extends Error {
   status: number;
   code: string | undefined;
@@ -29,7 +31,7 @@ async function handle<T>(res: Response): Promise<T> {
 }
 
 export async function getJson<T>(url: string): Promise<T> {
-  return handle<T>(await fetch(url, { credentials: "same-origin" }));
+  return handle<T>(await apiFetch(url));
 }
 
 export async function sendJson<T>(
@@ -38,9 +40,8 @@ export async function sendJson<T>(
   body?: unknown,
 ): Promise<T> {
   return handle<T>(
-    await fetch(url, {
+    await apiFetch(url, {
       method,
-      credentials: "same-origin",
       headers: body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     }),

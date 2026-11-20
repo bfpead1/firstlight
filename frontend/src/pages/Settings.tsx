@@ -9,6 +9,7 @@ import {
   useDisconnectGoogle,
   useLogout,
 } from "../lib/auth";
+import { isGuest } from "../lib/guest";
 import { type AiRoute, useAiStatus, useSettings, useUpdateSettings } from "../lib/settings";
 import { setTheme, type ThemeChoice, useTheme } from "../lib/theme";
 import { currentPosition, type PlaceResult, searchPlaces } from "../lib/weather";
@@ -17,6 +18,7 @@ export function Settings() {
   const { data: user } = useCurrentUser();
   const logout = useLogout();
   const disconnect = useDisconnectGoogle();
+  const guest = isGuest();
 
   if (!user) return null;
 
@@ -101,24 +103,26 @@ export function Settings() {
           onClick={() => logout.mutate()}
           disabled={logout.isPending}
         >
-          Sign out
+          {guest ? "Exit guest mode" : "Sign out"}
         </SecondaryButton>
-        <button
-          type="button"
-          onClick={() => {
-            if (
-              confirm(
-                "Disconnect Google? Firstlight will lose access to your Calendar and Gmail and you'll be signed out.",
-              )
-            ) {
-              disconnect.mutate();
-            }
-          }}
-          disabled={disconnect.isPending}
-          className="w-full py-2 text-[13px] font-semibold text-ink-soft-55"
-        >
-          Disconnect Google account
-        </button>
+        {!guest && (
+          <button
+            type="button"
+            onClick={() => {
+              if (
+                confirm(
+                  "Disconnect Google? Firstlight will lose access to your Calendar and Gmail and you'll be signed out.",
+                )
+              ) {
+                disconnect.mutate();
+              }
+            }}
+            disabled={disconnect.isPending}
+            className="w-full py-2 text-[13px] font-semibold text-ink-soft-55"
+          >
+            Disconnect Google account
+          </button>
+        )}
       </div>
     </div>
   );
@@ -224,7 +228,7 @@ function StatusSection() {
         <ListRow className="justify-between">
           <span className="text-[15px] text-ink">Data storage</span>
           <span className="text-[13px] font-semibold text-ink-soft-62">
-            {features.database === "supabase" ? "Supabase" : "Local file (dev)"}
+            {isGuest() ? "This browser tab (guest)" : features.database === "supabase" ? "Supabase" : "Local file (dev)"}
           </span>
         </ListRow>
       </Card>
